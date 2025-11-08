@@ -6,9 +6,10 @@ interface ShinyButtonProps {
   children: React.ReactNode
   onClick?: () => void
   className?: string
+  disabled?: boolean
 }
 
-export function ShinyButton({ children, onClick, className = "" }: ShinyButtonProps) {
+export function ShinyButton({ children, onClick, className = "", disabled = false }: ShinyButtonProps) {
   return (
     <>
       <style jsx>{`
@@ -190,7 +191,7 @@ export function ShinyButton({ children, onClick, className = "" }: ShinyButtonPr
         }
       `}</style>
 
-      <button className={`shiny-cta ${className}`} onClick={onClick}>
+      <button className={`shiny-cta ${className}`} onClick={onClick} disabled={disabled}>
         <span>{children}</span>
       </button>
     </>
