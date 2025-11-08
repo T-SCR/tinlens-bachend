@@ -29,5 +29,5 @@ interface NewsPageContentProps {
 export const NewsPageContent = ({ className }: NewsPageContentProps) => {
   const { t } = useLanguage();
 
-  return <NewsLayout title={t.trendingOnCheckmate} className={className} />;
+  return <NewsLayout title={t.trendingOnTinlens} className={className} />;
 };
