@@ -58,8 +58,8 @@ export function Header() {
 				)}
 			>
 				<Link href="/" className="flex items-center gap-2">
-					<Image src="/light.png" alt="TinLens" width={120} height={30} className="h-7 w-auto dark:hidden" />
-					<Image src="/dark.png" alt="TinLens" width={120} height={30} className="h-7 w-auto hidden dark:block" />
+					<Image src="/logo-light.png" alt="TinLens" width={120} height={30} className="h-8 w-auto dark:hidden" />
+					<Image src="/logo-dark.png" alt="TinLens" width={120} height={30} className="h-8 w-auto hidden dark:block" />
 				</Link>
 				<div className="hidden items-center gap-2 md:flex">
 					{links.map((link, i) => (

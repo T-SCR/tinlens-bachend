@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ShinyButton } from "@/components/ui/shiny-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ import { toast } from "sonner";
 import { AnalysisRenderer } from "@/components/analysis-renderer";
 import { useLanguage } from "@/components/language-provider";
 import Link from "next/link";
+import { TextRotate } from "@/components/ui/text-rotate";
 
 interface HeroSectionProps {
   initialUrl?: string;
@@ -409,38 +411,56 @@ This is a demonstration of how our AI fact-checking system would analyze the con
         <Badge variant="secondary" className="mb-4">
           AI-Powered Fact Checking
         </Badge>
-        <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl">
-          {t.heroTitle}
+        <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl flex flex-wrap items-center justify-center gap-4">
+          <span>Detect</span>
+          <TextRotate
+            texts={["Misinformation", "Fake News", "Deepfakes", "Propaganda"]}
+            mainClassName="text-primary inline-flex"
+            rotationInterval={2500}
+            staggerDuration={0.025}
+            staggerFrom="last"
+          />
+          <span>with AI</span>
         </h1>
         <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
           {t.heroSubtitle}
         </p>
         <div className="mx-auto max-w-2xl space-y-4">
-          <form
-            onSubmit={handleSubmit}
-            className="flex gap-3 items-center justify-center"
-          >
+          <div className="flex gap-3 items-center justify-center">
             <Input
               placeholder={t.urlPlaceholder}
               className="flex-1 h-12 text-base min-w-0"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               disabled={isLoading || isMockLoading}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' && !isLoading && !isMockLoading && url.trim()) {
+                  e.preventDefault();
+                  const fakeEvent = new Event('submit') as unknown as React.FormEvent<HTMLFormElement>;
+                  handleSubmit(fakeEvent);
+                }
+              }}
             />
-            <Button
-              type="submit"
-              size="lg"
-              className="px-6 h-12 shrink-0"
-              disabled={isLoading || isMockLoading || !url.trim()}
+            <ShinyButton
+              onClick={() => {
+                const fakeEvent = new Event('submit') as unknown as React.FormEvent<HTMLFormElement>;
+                handleSubmit(fakeEvent);
+              }}
+              className="px-6 h-12 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
-                <LoaderIcon className="h-4 w-4 mr-2 animate-spin" />
+                <>
+                  <LoaderIcon className="h-4 w-4 mr-2 animate-spin inline-block" />
+                  {t.analyzing}
+                </>
               ) : (
-                <PlayIcon className="h-4 w-4 mr-2" />
+                <>
+                  <PlayIcon className="h-4 w-4 mr-2 inline-block" />
+                  {t.analyzeButton}
+                </>
               )}
-              {isLoading ? t.analyzing : t.analyzeButton}
-            </Button>
-          </form>
+            </ShinyButton>
+          </div>
 
           {/* Mock Analysis Button */}
           <div className="flex justify-center">
