@@ -29,6 +29,7 @@ import { AnalysisRenderer } from "@/components/analysis-renderer";
 import { useLanguage } from "@/components/language-provider";
 import Link from "next/link";
 import { TextRotate } from "@/components/ui/text-rotate";
+import { Vortex } from "@/components/ui/vortex";
 
 interface HeroSectionProps {
   initialUrl?: string;
@@ -376,8 +377,16 @@ This is a demonstration of how our AI fact-checking system would analyze the con
   };
 
   return (
-    <section className="py-24 md:py-32 relative">
-      {/* Analysis Loading Overlay */}
+    <section className="w-full relative min-h-screen overflow-hidden">
+      {/* Animated Background */}
+      <Vortex
+        backgroundColor="transparent"
+        rangeY={800}
+        particleCount={500}
+        baseHue={220}
+        className="flex items-center flex-col justify-center px-2 md:px-10 py-24 w-full h-full"
+      >
+      {/* Loading Overlay */}
       {(isLoading || isMockLoading) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <Card className="w-full max-w-md mx-auto shadow-2xl border-primary border-2 animate-in fade-in-0 zoom-in-95">
@@ -936,6 +945,7 @@ This is a demonstration of how our AI fact-checking system would analyze the con
           </div>
         )}
       </div>
+      </Vortex>
     </section>
   );
 }

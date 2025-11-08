@@ -51,27 +51,27 @@ export function Header() {
 		>
 			<nav
 				className={cn(
-					'flex h-14 w-full items-center justify-between px-4 md:h-12 md:transition-all md:ease-out',
+					'flex h-20 w-full items-center justify-between px-6 md:h-20 md:transition-all md:ease-out',
 					{
-						'md:px-2': scrolled,
+						'md:px-4': scrolled,
 					},
 				)}
 			>
 				<Link href="/" className="flex items-center gap-2">
-					<Image src="/logo-light.png" alt="TinLens" width={120} height={30} className="h-8 w-auto dark:hidden" />
-					<Image src="/logo-dark.png" alt="TinLens" width={120} height={30} className="h-8 w-auto hidden dark:block" />
+					<Image src="/logo-light.png" alt="TinLens" width={180} height={50} className="h-12 w-auto dark:hidden" />
+					<Image src="/logo-dark.png" alt="TinLens" width={180} height={50} className="h-12 w-auto hidden dark:block" />
 				</Link>
-				<div className="hidden items-center gap-2 md:flex">
+				<div className="hidden items-center gap-3 md:flex">
 					{links.map((link, i) => (
-						<Link key={i} className={buttonVariants({ variant: 'ghost' })} href={link.href}>
+						<Link key={i} className={buttonVariants({ variant: 'ghost', size: 'lg' })} href={link.href}>
 							{link.label}
 						</Link>
 					))}
 					<Link href="/sign-in">
-						<Button variant="outline">Sign In</Button>
+						<Button variant="outline" size="lg">Sign In</Button>
 					</Link>
 					<Link href="/sign-up">
-						<Button>Get Started</Button>
+						<Button size="lg">Get Started</Button>
 					</Link>
 				</div>
 				<Button size="icon" variant="outline" onClick={() => setOpen(!open)} className="md:hidden">
@@ -81,7 +81,7 @@ export function Header() {
 
 			<div
 				className={cn(
-					'bg-background/90 fixed top-14 right-0 bottom-0 left-0 z-50 flex flex-col overflow-hidden border-y md:hidden',
+					'bg-background/90 fixed top-20 right-0 bottom-0 left-0 z-50 flex flex-col overflow-hidden border-y md:hidden',
 					open ? 'block' : 'hidden',
 				)}
 			>
