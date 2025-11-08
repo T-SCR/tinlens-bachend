@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
-  PlayIcon,
   LoaderIcon,
   CheckCircleIcon,
   AlertCircleIcon,
@@ -21,15 +20,14 @@ import {
   ChevronUpIcon,
   BookmarkIcon,
 } from "lucide-react";
-import { useTikTokAnalysis } from "@/lib/hooks/use-tiktok-analysis";
-import { useSaveTikTokAnalysisWithCredibility } from "@/lib/hooks/use-saved-analyses";
+import { useTikTokAnalysis as useContentAnalysis } from "@/lib/hooks/use-tiktok-analysis";
+import { useSaveTikTokAnalysisWithCredibility as useSaveContentAnalysisWithCredibility } from "@/lib/hooks/use-saved-analyses";
 import { useConvexAuth } from "convex/react";
 import { toast } from "sonner";
 import { AnalysisRenderer } from "@/components/analysis-renderer";
 import { useLanguage } from "@/components/language-provider";
 import Link from "next/link";
 import { TextRotate } from "@/components/ui/text-rotate";
-import { Vortex } from "@/components/ui/vortex";
 
 interface HeroSectionProps {
   initialUrl?: string;
@@ -96,10 +94,10 @@ export function HeroSection({ initialUrl = "" }: HeroSectionProps) {
       };
     };
   } | null>(null);
-  const { analyzeTikTok, isLoading, result, reset } = useTikTokAnalysis();
+  const { analyzeTikTok: analyzeContent, isLoading, result, reset } = useContentAnalysis();
   const { isAuthenticated } = useConvexAuth();
-  const saveTikTokAnalysisWithCredibility =
-    useSaveTikTokAnalysisWithCredibility();
+  const saveContentAnalysisWithCredibility =
+    useSaveContentAnalysisWithCredibility();
   const router = useRouter();
   const { t } = useLanguage();
 
@@ -128,8 +126,8 @@ export function HeroSection({ initialUrl = "" }: HeroSectionProps) {
     params.set("link", url.trim());
     router.replace(`?${params.toString()}`);
 
-    toast.info(t.analysisStarted);
-    await analyzeTikTok(url.trim());
+    toast.info("Analysis started...");
+    await analyzeContent(url.trim());
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -262,14 +260,15 @@ This is a demonstration of how our AI fact-checking system would analyze the con
 
     setIsSaving(true);
     try {
-      // Prepare the data for saving, mapping to schema format
+      setIsSaving(true);
+
       const saveData = {
-        videoUrl: result.data.metadata.originalUrl,
+        videoUrl: url,
         transcription: result.data.transcription
           ? {
               text: result.data.transcription.text,
+              segments: result.data.transcription.segments,
               language: result.data.transcription.language,
-              // Note: duration not available from API yet, will be undefined
             }
           : undefined,
         metadata: result.data.metadata
@@ -293,7 +292,6 @@ This is a demonstration of how our AI fact-checking system would analyze the con
           : undefined,
         factCheck: result.data.factCheck
           ? {
-              // Map from FactCheckResult to schema format
               verdict: (result.data.factCheck as unknown as FactCheckResult)
                 .verdict,
               confidence: (result.data.factCheck as unknown as FactCheckResult)
@@ -317,12 +315,10 @@ This is a demonstration of how our AI fact-checking system would analyze the con
             }
           : undefined,
         requiresFactCheck: result.data.requiresFactCheck,
-        // Use creator credibility rating if available, or default to neutral rating
-        creatorCredibilityRating: result.data.creatorCredibilityRating || 5.0,
+        creatorCredibilityRating: result.data.creatorCredibilityRating,
       };
 
-      // Use enhanced save function to properly handle content creators
-      await saveTikTokAnalysisWithCredibility(saveData);
+      await saveContentAnalysisWithCredibility(saveData);
 
       setIsSaved(true);
       toast.success(t.analysisSaved);
@@ -377,16 +373,8 @@ This is a demonstration of how our AI fact-checking system would analyze the con
   };
 
   return (
-    <section className="w-full relative min-h-screen overflow-hidden">
-      {/* Animated Background */}
-      <Vortex
-        backgroundColor="transparent"
-        rangeY={800}
-        particleCount={500}
-        baseHue={220}
-        className="flex items-center flex-col justify-center px-2 md:px-10 py-24 w-full h-full"
-      >
-      {/* Loading Overlay */}
+    <section className="py-24 md:py-32 relative">
+      {/* Analysis Loading Overlay */}
       {(isLoading || isMockLoading) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <Card className="w-full max-w-md mx-auto shadow-2xl border-primary border-2 animate-in fade-in-0 zoom-in-95">
@@ -408,8 +396,8 @@ This is a demonstration of how our AI fact-checking system would analyze the con
                   close this tab.
                 </p>
                 <p className="mt-4 text-xs text-gray-400">
-                  Checkmate is verifying sources, analyzing credibility, and
-                  summarizing results for you.
+                  TinLens is verifying claims, checking sources, and
+                  calculating confidence scores for you.
                 </p>
               </div>
             </CardContent>
@@ -420,25 +408,25 @@ This is a demonstration of how our AI fact-checking system would analyze the con
         <Badge variant="secondary" className="mb-4">
           AI-Powered Fact Checking
         </Badge>
-        <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl flex flex-wrap items-center justify-center gap-4">
-          <span>Detect</span>
+        <h1 className="mb-6 text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl flex flex-wrap items-center justify-center gap-4">
+          <span className="font-space-grotesk">Verify</span>
           <TextRotate
-            texts={["Misinformation", "Fake News", "Deepfakes", "Propaganda"]}
-            mainClassName="text-primary inline-flex"
+            texts={["Claims", "Posts", "Videos", "News"]}
+            mainClassName="text-primary inline-flex font-space-grotesk"
             rotationInterval={2500}
             staggerDuration={0.025}
             staggerFrom="last"
           />
-          <span>with AI</span>
+          <span className="font-space-grotesk">in Seconds</span>
         </h1>
         <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
-          {t.heroSubtitle}
+          TinLens checks posts, links, and videos against trusted sources and explains the result with a 0-100 confidence score. Know before you share.
         </p>
         <div className="mx-auto max-w-2xl space-y-4">
           <div className="flex gap-3 items-center justify-center">
             <Input
-              placeholder={t.urlPlaceholder}
-              className="flex-1 h-12 text-base min-w-0"
+              placeholder="Paste Twitter/X, YouTube, Instagram, or article URL..."
+              className="flex-1 h-14 text-base min-w-0 text-lg"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               disabled={isLoading || isMockLoading}
@@ -455,17 +443,17 @@ This is a demonstration of how our AI fact-checking system would analyze the con
                 const fakeEvent = new Event('submit') as unknown as React.FormEvent<HTMLFormElement>;
                 handleSubmit(fakeEvent);
               }}
-              className="px-6 h-12 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-8 h-14 text-base shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <>
-                  <LoaderIcon className="h-4 w-4 mr-2 animate-spin inline-block" />
-                  {t.analyzing}
+                  <LoaderIcon className="h-5 w-5 mr-2 animate-spin inline-block" />
+                  Verifying...
                 </>
               ) : (
                 <>
-                  <PlayIcon className="h-4 w-4 mr-2 inline-block" />
-                  {t.analyzeButton}
+                  <ShieldCheckIcon className="h-5 w-5 mr-2 inline-block" />
+                  Verify Now
                 </>
               )}
             </ShinyButton>
@@ -485,12 +473,12 @@ This is a demonstration of how our AI fact-checking system would analyze the con
               ) : (
                 <span className="mr-2">🧪</span>
               )}
-              {isMockLoading ? "Running Mock..." : "Try Mock Demo (Free!)"}
+              {isMockLoading ? "Running Demo..." : "🧪 Try Demo (No API Cost!)"}
             </Button>
           </div>
 
           <p className="text-sm text-muted-foreground text-center">
-            Try it with any TikTok/Twitter(X) video URL to see the magic happen
+            Paste any Twitter/X post, blog article, YouTube video, or Instagram link to verify instantly
           </p>
 
           {/* Mock Demo Description */}
@@ -945,7 +933,6 @@ This is a demonstration of how our AI fact-checking system would analyze the con
           </div>
         )}
       </div>
-      </Vortex>
     </section>
   );
 }

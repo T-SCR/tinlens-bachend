@@ -1,16 +1,11 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 
 interface CardCanvasProps {
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
 }
 
-interface CardProps {
-  children: ReactNode;
-  className?: string;
-}
-
-const CardCanvas: React.FC<CardCanvasProps> = ({ children, className = "" }) => {
+const CardCanvas = ({ children, className = "" }: CardCanvasProps) => {
   return (
     <div className={`card-canvas ${className}`}>
       <svg style={{ position: 'absolute', width: 0, height: 0 }}>
@@ -24,7 +19,12 @@ const CardCanvas: React.FC<CardCanvasProps> = ({ children, className = "" }) => 
   );
 };
 
-const Card: React.FC<CardProps> = ({ children, className = "" }) => {
+interface CardProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const Card = ({ children, className = "" }: CardProps) => {
   return (
     <div className={`glow-card ${className}`}>
       <div className="border-element border-left"></div>

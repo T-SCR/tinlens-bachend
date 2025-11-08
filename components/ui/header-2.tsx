@@ -13,16 +13,20 @@ export function Header() {
 
 	const links = [
 		{
-			label: 'Features',
+			label: 'Verify',
 			href: '/',
 		},
 		{
-			label: 'News',
+			label: 'Trends',
 			href: '/news',
 		},
 		{
-			label: 'Analyses',
-			href: '/analyses',
+			label: 'How it Works',
+			href: '#how-it-works',
+		},
+		{
+			label: 'For Teams',
+			href: '#teams',
 		},
 	];
 
@@ -51,27 +55,27 @@ export function Header() {
 		>
 			<nav
 				className={cn(
-					'flex h-20 w-full items-center justify-between px-6 md:h-20 md:transition-all md:ease-out',
+					'flex h-20 w-full items-center justify-between px-6 md:h-16 md:transition-all md:ease-out',
 					{
 						'md:px-4': scrolled,
 					},
 				)}
 			>
 				<Link href="/" className="flex items-center gap-2">
-					<Image src="/logo-light.png" alt="TinLens" width={180} height={50} className="h-12 w-auto dark:hidden" />
-					<Image src="/logo-dark.png" alt="TinLens" width={180} height={50} className="h-12 w-auto hidden dark:block" />
+					<Image src="/Untitled (200 x 50 mm) (5).png" alt="TinLens" width={160} height={40} className="h-10 w-auto dark:hidden" priority />
+					<Image src="/Untitled (200 x 50 mm) (4).png" alt="TinLens" width={160} height={40} className="h-10 w-auto hidden dark:block" priority />
 				</Link>
-				<div className="hidden items-center gap-3 md:flex">
+				<div className="hidden items-center gap-2 md:flex">
 					{links.map((link, i) => (
-						<Link key={i} className={buttonVariants({ variant: 'ghost', size: 'lg' })} href={link.href}>
+						<Link key={i} className={buttonVariants({ variant: 'ghost' })} href={link.href}>
 							{link.label}
 						</Link>
 					))}
 					<Link href="/sign-in">
-						<Button variant="outline" size="lg">Sign In</Button>
+						<Button variant="outline">Sign In</Button>
 					</Link>
 					<Link href="/sign-up">
-						<Button size="lg">Get Started</Button>
+						<Button>Get Started</Button>
 					</Link>
 				</div>
 				<Button size="icon" variant="outline" onClick={() => setOpen(!open)} className="md:hidden">
@@ -81,7 +85,7 @@ export function Header() {
 
 			<div
 				className={cn(
-					'bg-background/90 fixed top-20 right-0 bottom-0 left-0 z-50 flex flex-col overflow-hidden border-y md:hidden',
+					'bg-background/90 fixed top-14 right-0 bottom-0 left-0 z-50 flex flex-col overflow-hidden border-y md:hidden',
 					open ? 'block' : 'hidden',
 				)}
 			>
