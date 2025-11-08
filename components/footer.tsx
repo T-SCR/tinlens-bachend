@@ -12,7 +12,7 @@ export function Footer() {
             <div className="flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground">
               <CheckCircleIcon className="h-4 w-4" />
             </div>
-            <span className="font-semibold">Checkmate</span>
+            <span className="font-semibold">TinLens</span>
           </div>
           <p className="text-sm text-muted-foreground">
             {t.fightMisinformation}

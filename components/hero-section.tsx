@@ -173,7 +173,7 @@ Key simulated claims found:
         metadata: {
           title: "Mock Content Analysis - Demo Mode",
           description:
-            "This is a simulated analysis showing how Checkmate would process real content without using expensive APIs.",
+            "This is a simulated analysis showing how TinLens would process real content without using expensive APIs.",
           creator: "MockCreator123",
           originalUrl: url,
           platform: url.includes("tiktok")

@@ -430,7 +430,7 @@ export const translations: Record<Language, Translations> = {
 
     // Footer
     builtWith: "Dibina dengan",
-    fightMisinformation: "© 2024 Checkmate. Melawan maklumat palsu dengan AI.",
+    fightMisinformation: "© 2024 TinLens. Melawan maklumat palsu dengan AI.",
 
     // Messages
     enterUrl: "Sila masukkan URL untuk dianalisis.",
