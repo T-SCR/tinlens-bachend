@@ -1,10 +1,18 @@
-import { HomePageContent } from "@/components/home-page-content"
-import { PageLayout } from "@/components/ui/page-layout"
+import { NewHeroSection } from "@/components/new-hero-section";
+import { RedesignedHowItWorks } from "@/components/redesigned-how-it-works";
+import { FinalCTA } from "@/components/final-cta";
 
-export default function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ link?: string }>;
+}) {
+  const { link } = await searchParams;
   return (
-    <PageLayout variant="gradient">
-      <HomePageContent />
-    </PageLayout>
-  )
+    <div>
+      <NewHeroSection initialUrl={link} />
+      <RedesignedHowItWorks />
+      <FinalCTA />
+    </div>
+  );
 }

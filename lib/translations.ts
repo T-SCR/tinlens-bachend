@@ -175,7 +175,7 @@ export const translations: Record<Language, Translations> = {
     heroTitle: "Verify Content with TinLens",
     heroSubtitle:
       "Detect and verify misinformation with AI. Paste text, Twitter posts, YouTube links, or upload media to get instant fact-checking with confidence scores and citations.",
-    urlPlaceholder: "Paste any post, YouTube, Instagram, or X (Twitter) URL...",
+    urlPlaceholder: "Enter  URL (e.g., https://vm.tiktok.com/...)",
     analyzeButton: "Analyze Content",
     analyzing: "Analyzing...",
     tryAgain: "Try Again",
@@ -216,7 +216,7 @@ export const translations: Record<Language, Translations> = {
     // How it works
     howItWorksTitle: "How It Works",
     step1Title: "Paste URL",
-    step1Description: "Paste any post, link, or video URL to start verification.",
+    step1Description: "Simply paste any TikTok video URL into our analyzer.",
     step2Title: "AI Analysis",
     step2Description:
       "Our AI transcribes the content and performs comprehensive fact-checking.",
@@ -227,14 +227,14 @@ export const translations: Record<Language, Translations> = {
     // CTA Section
     ctaTitle: "Ready to Fight Misinformation?",
     ctaDescription:
-      "Join the fight against misinformation. Start verifying claims with confidence scores today.",
+      "Join the fight against misinformation. Start fact-checking TikTok content today.",
     getStarted: "Get Started Free",
     learnMore: "Learn More",
 
     // How It Works Steps
-    inputTikTokLink: "Paste Content Link",
+    inputTikTokLink: "Input TikTok Link",
     inputTikTokLinkDesc:
-      "Paste any post, link, or video URL into our secure analyzer",
+      "Simply paste any TikTok video URL into our secure input field",
     audioTranscription: "Audio Transcription",
     audioTranscriptionDesc:
       "AI-powered transcription extracts and converts speech to text",

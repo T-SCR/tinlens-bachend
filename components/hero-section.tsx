@@ -391,15 +391,15 @@ This is a demonstration of how our AI fact-checking system would analyze the con
               <Progress value={70} />
               <div className="text-base text-muted-foreground text-center">
                 <p>
-                  Extracting claims, verifying with trusted sources, and
-                  calculating confidence scores.
+                  We are transcribing the video, detecting news content, and
+                  fact-checking claims using AI.
                 </p>
                 <p className="mt-2">
-                  This may take up to a minute for complex content. Please don&apos;t
+                  This may take up to a minute for longer videos. Please don’t
                   close this tab.
                 </p>
                 <p className="mt-4 text-xs text-gray-400">
-                  TinLens is verifying sources, analyzing credibility, and
+                  Checkmate is verifying sources, analyzing credibility, and
                   summarizing results for you.
                 </p>
               </div>
@@ -409,20 +409,21 @@ This is a demonstration of how our AI fact-checking system would analyze the con
       )}
       <div className="text-center">
         <Badge variant="secondary" className="mb-4">
-          Know before you share
+          AI-Powered Fact Checking
         </Badge>
-        <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl font-display flex flex-wrap items-center justify-center gap-4">
-          <span>Verify claims in</span>
+        <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl flex flex-wrap items-center justify-center gap-4">
+          <span>Detect</span>
           <TextRotate
-            texts={["seconds", "real-time", "confidence", "transparency"]}
+            texts={["Misinformation", "Fake News", "Deepfakes", "Propaganda"]}
             mainClassName="text-primary inline-flex"
             rotationInterval={2500}
             staggerDuration={0.025}
             staggerFrom="last"
           />
+          <span>with AI</span>
         </h1>
         <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
-          TinLens checks posts, links, and videos against trusted sources and explains the result with a 0–100 confidence score.
+          {t.heroSubtitle}
         </p>
         <div className="mx-auto max-w-2xl space-y-4">
           <div className="flex gap-3 items-center justify-center">
@@ -480,7 +481,7 @@ This is a demonstration of how our AI fact-checking system would analyze the con
           </div>
 
           <p className="text-sm text-muted-foreground text-center">
-            Paste any post, link, YouTube, Instagram, or X (Twitter) URL to verify claims instantly
+            Try it with any TikTok/Twitter(X) video URL to see the magic happen
           </p>
 
           {/* Mock Demo Description */}

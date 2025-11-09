@@ -15,12 +15,12 @@ export function HowItWorks() {
   const steps = [
     {
       step: 1,
-      title: "Paste or Highlight Content",
+      title: "Paste TikTok or Twitter/X Link",
       description:
-        "Paste any post, link, or video URL from social media, news sites, or YouTube into our secure analyzer.",
+        "Paste any public TikTok or Twitter/X video URL into our secure analyzer.",
       icon: LinkIcon,
       features: [
-        "Works with YouTube, Instagram, X (Twitter), articles",
+        "Works with TikTok & Twitter/X",
         "Secure URL processing",
         "No account required",
       ],
@@ -28,54 +28,54 @@ export function HowItWorks() {
     },
     {
       step: 2,
-      title: "AI Extraction & Claim Detection",
+      title: "AI Transcription & Extraction",
       description:
-        "TinLens extracts text from posts and transcribes video/audio, then normalizes content into atomic claims.",
+        "AI extracts text from posts and transcribes video/audio using OpenAI Whisper.",
       icon: AudioWaveformIcon,
       features: [
         "OpenAI Whisper for video/audio",
-        "Extracts claims from any content type",
+        "Extracts post and video text",
         "Multi-language support",
       ],
       isReversed: true,
     },
     {
       step: 3,
-      title: "Semantic Retrieval & Verification",
+      title: "News & Claim Detection",
       description:
-        "Verifies claims via semantic search across trusted sources, fact-check databases, and official resources.",
+        "Detects news, opinions, and factual claims in the content for both platforms.",
       icon: SearchIcon,
       features: [
-        "AI-powered semantic retrieval",
-        "Cross-references fact-check APIs",
-        "Ranks by trust, recency, and fit",
+        "AI-powered claim extraction",
+        "News vs. opinion detection",
+        "Works for TikTok & Twitter/X",
       ],
       isReversed: false,
     },
     {
       step: 4,
-      title: "Veracity Judge & Confidence Score",
+      title: "Fact-Checking & Source Analysis",
       description:
-        "Assigns a verdict (True/False/Misleading/Unverifiable) with a 0–100 confidence score based on evidence strength.",
+        "Verifies claims using web search, databases, and evaluates source credibility.",
       icon: ShieldCheckIcon,
       features: [
-        "Evidence-based scoring",
-        "Safe Mode for low confidence",
-        "Source reliability weighting",
+        "Web & database verification",
+        "Checks claim credibility",
+        "Source reliability analysis",
       ],
       isReversed: true,
     },
     {
       step: 5,
-      title: "Share the Explanation",
+      title: "Credibility & Creator Report",
       description:
-        "Get a clear verdict with citations and export a myth-vs-fact card to share on any platform.",
+        "Get a detailed report with verdicts, sources, and creator credibility rating.",
       icon: FileTextIcon,
       features: [
-        "True/False/Misleading/Unverifiable verdicts",
-        "Linked credible sources with timestamps",
-        "One-tap shareable cards",
-        "Bilingual explanations (EN/HI)",
+        "Truth/misleading/unverifiable verdicts",
+        "Linked credible sources",
+        "Creator credibility rating",
+        "Easy-to-read summary",
       ],
       isReversed: false,
       showArrow: false,

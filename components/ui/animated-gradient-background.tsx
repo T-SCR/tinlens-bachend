@@ -1,5 +1,3 @@
-"use client"
-
 import { motion } from "framer-motion";
 import React, { useEffect, useRef } from "react";
 
@@ -34,6 +32,7 @@ const AnimatedGradientBackground: React.FC<AnimatedGradientBackgroundProps> = ({
    topOffset = 0,
    containerClassName = "",
 }) => {
+
    if (gradientColors.length !== gradientStops.length) {
       throw new Error(
          `GradientColors and GradientStops must have the same length.
