@@ -26,14 +26,13 @@ export const transcribeRequestSchema = z
 export type TranscribeRequest = z.infer<typeof transcribeRequestSchema>;
 
 // Platform detection
-export function detectPlatform(url: string): "tiktok" | "twitter" | "web" {
-  if (TIKTOK_URL_PATTERN.test(url)) {
-    return "tiktok";
-  } else if (TWITTER_URL_PATTERN.test(url)) {
-    return "twitter";
-  } else {
-    return "web";
-  }
+export type Platform = "tiktok" | "twitter" | "instagram" | "youtube" | "web";
+export function detectPlatform(url: string): Platform {
+  if (/tiktok\.com/.test(url)) return "tiktok";
+  if (/twitter\.com|x\.com/.test(url)) return "twitter";
+  if (/instagram\.com/.test(url)) return "instagram";
+  if (/youtube\.com|youtu\.be/.test(url)) return "youtube";
+  return "web";
 }
 
 // URL validation

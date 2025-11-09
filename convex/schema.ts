@@ -10,6 +10,11 @@ const schema = defineSchema({
     lastName: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     username: v.optional(v.string()),
+    // Credits system
+    credits: v.number(), // Analysis credits
+    totalCreditsUsed: v.number(), // Total credits consumed
+    creditsAddedAt: v.optional(v.number()), // Last credit top-up time
+    // Metadata
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_clerk_id", ["clerkId"]),

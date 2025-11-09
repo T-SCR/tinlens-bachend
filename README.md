@@ -1,12 +1,12 @@
-# TinLens 🔍
+# 🔍 TinLens - AI-Powered Content Verification Platform
 
-_AI-Powered Misinformation Detection & Fact-Checking Platform_
+> **Combat misinformation with AI-powered fact-checking**
 
-> No possible way to escape. Combating digital misinformation in India through advanced AI, NLP, and crowd-sourced verification
+TinLens analyzes content from X/Twitter, YouTube, Instagram, TikTok, and web articles to verify claims, detect fake news, and assess source credibility.
 
----
-
-## 🏆 Mumbai Hacks Challenge & Our Approach
+## 🏆 Built for Mumbai Hacks
+**Team**: Sharat & Hrithvik  
+**Mission**: Fight misinformation with AI
 
 ### The Problem We're Solving
 

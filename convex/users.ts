@@ -41,6 +41,8 @@ export const createUser = mutation({
       lastName: args.lastName,
       imageUrl: args.imageUrl,
       username: args.username,
+      credits: 10, // Give 10 free credits to new users
+      totalCreditsUsed: 0,
       createdAt: now,
       updatedAt: now,
     });
@@ -74,7 +76,7 @@ export const updateOrCreateUser = internalMutation({
 
     const userData = {
       clerkId: clerkUser.id,
-      email: primaryEmail.email_address,
+      email: clerkUser.email_addresses[0]?.email_address || "",
       firstName: clerkUser.first_name || undefined,
       lastName: clerkUser.last_name || undefined,
       imageUrl: clerkUser.image_url || undefined,
@@ -87,8 +89,12 @@ export const updateOrCreateUser = internalMutation({
       // Update existing user
       return await ctx.db.patch(existingUser._id, userData);
     } else {
-      // Create new user
-      return await ctx.db.insert("users", userData);
+      // Create new user with default credits
+      return await ctx.db.insert("users", {
+        ...userData,
+        credits: 10, // Give 10 free credits to new users
+        totalCreditsUsed: 0,
+      });
     }
   },
 });
