@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
 import UserSync from "@/components/user-sync";
@@ -8,27 +8,21 @@ import { Header } from "@/components/ui/header-2";
 import Providers from "@/components/Providers";
 
 const inter = Inter({
-  subsets: ["latin"],
   variable: "--font-inter",
+  subsets: ["latin"],
   display: "swap",
 });
 
 const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
   variable: "--font-space-grotesk",
-  display: "swap",
-});
-
-const jetBrains = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-jetbrains",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "TinLens - Verify Claims in Seconds | Know Before You Share",
+  title: "TinLens - AI-Powered Misinformation Detection",
   description:
-    "TinLens verifies posts, links, and videos with trusted sources using AI. Get a 0-100 confidence score, citations, and shareable myth-vs-fact cards instantly.",
+    "Detect and verify misinformation with AI. Analyze content from YouTube, Instagram, and web URLs with confidence scores, tags, and citations.",
 };
 
 export default function RootLayout({
@@ -39,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrains.variable} antialiased font-sans`}
+        className={`${inter.variable} ${spaceGrotesk.variable} antialiased font-sans`}
       >
         <Providers>
           {/* User sync is used to sync the user to the database */}
