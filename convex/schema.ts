@@ -10,9 +10,10 @@ const schema = defineSchema({
     lastName: v.optional(v.string()),
     imageUrl: v.optional(v.string()),
     username: v.optional(v.string()),
+    plan: v.optional(v.string()), // free | plus | pro
     // Credits system
-    credits: v.number(), // Analysis credits
-    totalCreditsUsed: v.number(), // Total credits consumed
+    credits: v.optional(v.number()), // Analysis credits
+    totalCreditsUsed: v.optional(v.number()), // Total credits consumed
     creditsAddedAt: v.optional(v.number()), // Last credit top-up time
     // Metadata
     createdAt: v.number(),

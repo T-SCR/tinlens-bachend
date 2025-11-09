@@ -23,7 +23,7 @@ interface WebExtractedData extends ExtractedContent {
     keywords?: string;
     language?: string;
   };
-  type: "web_content";
+  type: "web_content" | "social_content";
 }
 
 /**
@@ -42,8 +42,11 @@ interface WebExtractedData extends ExtractedContent {
  * ```
  */
 export class WebHandler extends BaseHandler {
-  constructor() {
-    super("web");
+  private readonly handlerPlatform: "web" | "instagram" | "youtube";
+
+  constructor(platform: "web" | "instagram" | "youtube" = "web") {
+    super(platform);
+    this.handlerPlatform = platform;
   }
 
   /**
@@ -85,7 +88,7 @@ export class WebHandler extends BaseHandler {
         content: data.content || "",
         author: data.author,
         metadata: data.metadata,
-        type: "web_content",
+        type: this.handlerPlatform === "web" ? "web_content" : "social_content",
       };
 
       return extractedData;

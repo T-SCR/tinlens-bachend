@@ -2,21 +2,22 @@ import { z } from "zod";
 import { ApiError, ApiErrorCode } from "./api-error";
 
 // URL validation patterns
-const TIKTOK_URL_PATTERN =
-  /^https?:\/\/(www\.)?(tiktok\.com|vt\.tiktok\.com|vm\.tiktok\.com)/;
-const TWITTER_URL_PATTERN =
-  /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/;
+const INSTAGRAM_URL_PATTERN =
+  /^https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\/[A-Za-z0-9_-]+/;
+const YOUTUBE_URL_PATTERN =
+  /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/[A-Za-z0-9_\-?=&/]+/;
 
 // Request schemas
 export const transcribeRequestSchema = z
   .object({
-    videoUrl: z.string().url().optional(),
-    tiktokUrl: z.string().url().optional(),
-    twitterUrl: z.string().url().optional(),
+    instagramUrl: z.string().url().optional(),
+    youtubeUrl: z.string().url().optional(),
     webUrl: z.string().url().optional(),
+    contentUrl: z.string().url().optional(),
   })
   .refine(
-    (data) => data.videoUrl || data.tiktokUrl || data.twitterUrl || data.webUrl,
+    (data) =>
+      data.instagramUrl || data.youtubeUrl || data.webUrl || data.contentUrl,
     {
       message: "At least one URL parameter is required",
       path: ["url"],
@@ -26,10 +27,8 @@ export const transcribeRequestSchema = z
 export type TranscribeRequest = z.infer<typeof transcribeRequestSchema>;
 
 // Platform detection
-export type Platform = "tiktok" | "twitter" | "instagram" | "youtube" | "web";
+export type Platform = "instagram" | "youtube" | "web";
 export function detectPlatform(url: string): Platform {
-  if (/tiktok\.com/.test(url)) return "tiktok";
-  if (/twitter\.com|x\.com/.test(url)) return "twitter";
   if (/instagram\.com/.test(url)) return "instagram";
   if (/youtube\.com|youtu\.be/.test(url)) return "youtube";
   return "web";
@@ -45,10 +44,10 @@ export function validateUrl(url: string, platform?: string): void {
   }
 
   // Platform-specific validation
-  if (platform === "twitter" && !TWITTER_URL_PATTERN.test(url)) {
-    throw ApiError.invalidUrl(url, "Twitter");
-  } else if (platform === "tiktok" && !TIKTOK_URL_PATTERN.test(url)) {
-    throw ApiError.invalidUrl(url, "TikTok");
+  if (platform === "instagram" && !INSTAGRAM_URL_PATTERN.test(url)) {
+    throw ApiError.invalidUrl(url, "Instagram");
+  } else if (platform === "youtube" && !YOUTUBE_URL_PATTERN.test(url)) {
+    throw ApiError.invalidUrl(url, "YouTube");
   }
 }
 
@@ -80,15 +79,6 @@ export function sanitizeUrl(url: string): string {
     // If URL parsing fails, return original (validation will catch this)
     return url;
   }
-}
-
-// Extract identifiers from URLs
-export function extractTweetId(url: string): string {
-  const match = url.match(/status\/(\d+)/);
-  if (!match) {
-    throw ApiError.invalidUrl(url, "Twitter");
-  }
-  return match[1];
 }
 
 // Content validation

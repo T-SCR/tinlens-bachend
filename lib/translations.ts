@@ -175,7 +175,7 @@ export const translations: Record<Language, Translations> = {
     heroTitle: "Verify Content with TinLens",
     heroSubtitle:
       "Detect and verify misinformation with AI. Paste text, Twitter posts, YouTube links, or upload media to get instant fact-checking with confidence scores and citations.",
-    urlPlaceholder: "Enter  URL (e.g., https://vm.tiktok.com/...)",
+    urlPlaceholder: "Enter a URL (e.g., https://www.instagram.com/reel/...)",
     analyzeButton: "Analyze Content",
     analyzing: "Analyzing...",
     tryAgain: "Try Again",
@@ -350,7 +350,7 @@ export const translations: Record<Language, Translations> = {
     heroTitle: "Sahkan Kandungan dengan TinLens",
     heroSubtitle:
       "Tampalkan mana-mana URL TikTok, X (Twitter), blog, atau berita untuk mendapat transkripsi segera, analisis, dan penilaian kredibiliti dikuasakan oleh AI canggih.",
-    urlPlaceholder: "Masukkan URL  (cth., https://vm.tiktok.com/...)",
+    urlPlaceholder: "Masukkan URL (cth., https://www.instagram.com/reel/...)",
     analyzeButton: "Analisis Kandungan",
     analyzing: "Menganalisis...",
     tryAgain: "Cuba Lagi",

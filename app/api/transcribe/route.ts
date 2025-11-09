@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { ConvexHttpClient } from "convex/browser";
+
 import {
   validateTranscribeRequest,
   detectPlatform,
   sanitizeUrl,
+  validateUrl,
 } from "../../../lib/validation";
 import { ApiError } from "../../../lib/api-error";
 import { logger } from "../../../lib/logger";
 import { checkOperationRateLimit } from "../../../lib/rate-limiter";
-import { TikTokHandler } from "./handlers/tiktok-handler";
-import { TwitterHandler } from "./handlers/twitter-handler";
+import { InstagramHandler } from "./handlers/instagram-handler";
+import { YouTubeHandler } from "./handlers/youtube-handler";
 import { WebHandler } from "./handlers/web-handler";
 import { ProcessingContext } from "./handlers/base-handler";
+import { api } from "@/convex/_generated/api";
+
+function createConvexClient(token: string) {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_CONVEX_URL is not configured");
+  }
+  const client = new ConvexHttpClient(url);
+  client.setAuth(token);
+  return client;
+}
 
 /**
  * Content Analysis API Endpoint
@@ -18,8 +33,8 @@ import { ProcessingContext } from "./handlers/base-handler";
  * This endpoint analyzes social media and web content for fact-checking and credibility assessment.
  *
  * **Supported Platforms:**
- * - TikTok videos: Extracts video metadata, transcribes audio, fact-checks content
- * - Twitter/X posts: Extracts tweet data, transcribes video if present, fact-checks text
+ * - Instagram Reels/Posts: Extracts metadata, scrapes captions, and runs fact-checks
+ * - YouTube videos: Extracts metadata, captions, and runs fact-checks
  * - Web articles: Scrapes content, fact-checks articles and blog posts
  *
  * **Features:**
@@ -33,10 +48,10 @@ import { ProcessingContext } from "./handlers/base-handler";
  * **Request Format:**
  * ```json
  * {
- *   "tiktokUrl": "https://tiktok.com/@user/video/123...",  // OR
- *   "twitterUrl": "https://twitter.com/user/status/123...", // OR
- *   "webUrl": "https://example.com/article",               // OR
- *   "videoUrl": "https://any-video-url.mp4"
+ *   "instagramUrl": "https://www.instagram.com/reel/ABC123/", // OR
+ *   "youtubeUrl": "https://youtu.be/xyz789",                   // OR
+ *   "webUrl": "https://example.com/article",                   // OR
+ *   "contentUrl": "https://any-public-url"
  * }
  * ```
  *
@@ -79,22 +94,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       requestId,
       operation: "validate-request",
       metadata: {
-        hasVideoUrl: !!validatedRequest.videoUrl,
-        hasTiktokUrl: !!validatedRequest.tiktokUrl,
-        hasTwitterUrl: !!validatedRequest.twitterUrl,
+        hasInstagramUrl: !!validatedRequest.instagramUrl,
+        hasYouTubeUrl: !!validatedRequest.youtubeUrl,
         hasWebUrl: !!validatedRequest.webUrl,
+        hasContentUrl: !!validatedRequest.contentUrl,
       },
     });
 
     // Step 2: Extract and sanitize the URL
     const rawUrl =
       validatedRequest.webUrl ||
-      validatedRequest.twitterUrl ||
-      validatedRequest.tiktokUrl ||
-      validatedRequest.videoUrl!;
+      validatedRequest.instagramUrl ||
+      validatedRequest.youtubeUrl ||
+      validatedRequest.contentUrl!;
 
     const sanitizedUrl = sanitizeUrl(rawUrl);
     const platform = detectPlatform(sanitizedUrl);
+    validateUrl(sanitizedUrl, platform);
 
     logger.info("Platform detected and URL sanitized", {
       requestId,
@@ -131,10 +147,64 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    const { userId, getToken } = await auth();
+    if (!userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "UNAUTHENTICATED",
+            message: "Sign in to verify content and manage credits.",
+          },
+        },
+        { status: 401 }
+      );
+    }
+
+    const convexToken = await getToken({ template: "convex" });
+    if (!convexToken) {
+      throw ApiError.internalError(
+        new Error("Unable to obtain Convex auth token from Clerk.")
+      );
+    }
+
+    const convex = createConvexClient(convexToken);
+    const currentUser = await convex.query(api.users.getCurrentUser, {});
+
+    if (!currentUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "USER_NOT_FOUND",
+            message: "We could not locate your TinLens account record.",
+          },
+        },
+        { status: 404 }
+      );
+    }
+
+    const hasUnlimitedCredits =
+      currentUser.hasUnlimitedCredits || currentUser.credits === -1;
+    const availableCredits = currentUser.credits ?? 0;
+    if (!hasUnlimitedCredits && availableCredits < 1) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "INSUFFICIENT_CREDITS",
+            message:
+              "You are out of credits. Purchase more to continue verifying content.",
+          },
+        },
+        { status: 402 }
+      );
+    }
+
     // Step 4: Create processing context
     const context: ProcessingContext = {
       requestId,
-      userId: request.headers.get("x-user-id") || undefined,
+      userId,
       platform,
       url: sanitizedUrl,
       startTime,
@@ -143,11 +213,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Step 5: Select appropriate handler based on platform
     let handler;
     switch (platform) {
-      case "tiktok":
-        handler = new TikTokHandler();
+      case "instagram":
+        handler = new InstagramHandler();
         break;
-      case "twitter":
-        handler = new TwitterHandler();
+      case "youtube":
+        handler = new YouTubeHandler();
         break;
       case "web":
         handler = new WebHandler();
@@ -165,6 +235,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Step 6: Process the content using the selected handler
     const result = await handler.process(sanitizedUrl, context);
+
+    if (!hasUnlimitedCredits) {
+      try {
+        await convex.mutation(api.credits.deductCredits, { amount: 1 });
+      } catch (creditError) {
+        logger.error(
+          "Failed to deduct credits after successful analysis",
+          {
+            requestId,
+            operation: "credit-deduction",
+            metadata: { userId, platform },
+          },
+          creditError as Error
+        );
+      }
+    }
 
     // Step 7: Log success and return results
     const duration = Date.now() - startTime;
@@ -253,7 +339,7 @@ export async function GET(): Promise<NextResponse> {
     service: "content-analysis-api",
     version: "1.0.0",
     timestamp: new Date().toISOString(),
-    supportedPlatforms: ["tiktok", "twitter", "web"],
+    supportedPlatforms: ["instagram", "youtube", "web"],
     features: [
       "video-transcription",
       "fact-checking",

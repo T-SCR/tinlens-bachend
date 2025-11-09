@@ -5,8 +5,6 @@ export enum ApiErrorCode {
   UNSUPPORTED_PLATFORM = "UNSUPPORTED_PLATFORM",
 
   // External service errors
-  TIKTOK_FETCH_FAILED = "TIKTOK_FETCH_FAILED",
-  TWITTER_FETCH_FAILED = "TWITTER_FETCH_FAILED",
   WEB_SCRAPE_FAILED = "WEB_SCRAPE_FAILED",
   TRANSCRIPTION_FAILED = "TRANSCRIPTION_FAILED",
   FACT_CHECK_FAILED = "FACT_CHECK_FAILED",
@@ -63,7 +61,7 @@ export class ApiError extends Error {
   static missingUrl(): ApiError {
     return new ApiError(
       ApiErrorCode.MISSING_URL,
-      "A URL is required (videoUrl, tiktokUrl, twitterUrl, or webUrl)",
+      "A URL is required (instagramUrl, youtubeUrl, webUrl, or contentUrl)",
       400
     );
   }
@@ -75,26 +73,6 @@ export class ApiError extends Error {
       400,
       true,
       { url }
-    );
-  }
-
-  static tiktokFetchFailed(url: string, originalError?: Error): ApiError {
-    return new ApiError(
-      ApiErrorCode.TIKTOK_FETCH_FAILED,
-      "Failed to fetch TikTok video data",
-      503,
-      true,
-      { url, originalError: originalError?.message }
-    );
-  }
-
-  static twitterFetchFailed(tweetId: string, originalError?: Error): ApiError {
-    return new ApiError(
-      ApiErrorCode.TWITTER_FETCH_FAILED,
-      "Failed to fetch Twitter post data",
-      503,
-      true,
-      { tweetId, originalError: originalError?.message }
     );
   }
 

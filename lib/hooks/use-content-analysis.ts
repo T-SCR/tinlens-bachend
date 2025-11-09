@@ -3,7 +3,10 @@ import {
   useSaveTikTokAnalysis,
   useSaveTikTokAnalysisWithCredibility,
 } from "./use-saved-analyses";
-import { useConvexAuth } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
+import { toast } from "sonner";
+
+import { api } from "@/convex/_generated/api";
 
 interface TranscriptionData {
   text: string;
@@ -55,7 +58,7 @@ interface FactCheckData {
   sources?: FactCheckSource[];
 }
 
-interface TikTokAnalysisData {
+interface ContentAnalysisData {
   transcription: TranscriptionData;
   metadata: {
     title: string;
@@ -70,60 +73,98 @@ interface TikTokAnalysisData {
   creatorCredibilityRating?: number;
 }
 
-interface TikTokAnalysisResult {
+interface ContentAnalysisResult {
   success: boolean;
-  data?: TikTokAnalysisData;
+  data?: ContentAnalysisData;
   error?: string;
 }
 
-export function useTikTokAnalysis() {
-  const { isAuthenticated } = useConvexAuth();
+export function useContentAnalysis() {
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const userCredits = useQuery(
+    api.credits.getUserCredits,
+    isAuthenticated ? {} : undefined
+  );
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<TikTokAnalysisResult | null>(null);
+  const [result, setResult] = useState<ContentAnalysisResult | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const saveTikTokAnalysis = useSaveTikTokAnalysis();
-  const saveTikTokAnalysisWithCredibility =
-    useSaveTikTokAnalysisWithCredibility();
+  const saveAnalysis = useSaveTikTokAnalysis();
+  const saveAnalysisWithCredibility = useSaveTikTokAnalysisWithCredibility();
 
-  const analyzeTikTok = async (
+  const analyzeContent = async (
     url: string,
-    saveToDb = false // Changed default to false to prevent auto-save duplicates
-  ): Promise<TikTokAnalysisResult> => {
+    saveToDb = false
+  ): Promise<ContentAnalysisResult> => {
     setIsLoading(true);
     setResult(null);
 
-    try {
-      // Validate URL format (TikTok, Twitter, or general web URL)
-      const tiktokUrlPattern =
-        /^https?:\/\/(www\.)?(tiktok\.com|vt\.tiktok\.com|vm\.tiktok\.com)/;
-      const twitterUrlPattern =
-        /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/\w+\/status\/\d+/;
+    const failEarly = (message: string) => {
+      const errorResult = { success: false, error: message };
+      setResult(errorResult);
+      setIsLoading(false);
+      return errorResult;
+    };
 
-      // Basic URL validation for any other web content
+    if (authLoading) {
+      const message = "Checking your account. Please try again.";
+      toast.info(message);
+      return failEarly(message);
+    }
+
+    if (!isAuthenticated) {
+      const message = "Please sign in to verify content with TinLens.";
+      toast.error(message);
+      return failEarly(message);
+    }
+
+    if (userCredits === undefined) {
+      const message = "Syncing your credits. Try again in a moment.";
+      toast.info(message);
+      return failEarly(message);
+    }
+
+    const hasUnlimitedCredits =
+      userCredits.hasUnlimitedCredits || userCredits.credits === -1;
+
+    if (!hasUnlimitedCredits && userCredits.credits < 1) {
+      const message =
+        "You are out of credits. Purchase more to continue verifying.";
+      toast.error(message);
+      return failEarly(message);
+    }
+
+    try {
       try {
         new URL(url);
       } catch {
         throw new Error("Invalid URL format. Please provide a valid URL.");
       }
 
-      // Determine platform and set appropriate body parameter
-      const isTikTok = tiktokUrlPattern.test(url);
-      const isTwitter = twitterUrlPattern.test(url);
+      const instagramUrlPattern =
+        /^https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\//;
+      const youtubeUrlPattern =
+        /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//;
+
+      const isInstagram = instagramUrlPattern.test(url);
+      const isYouTube = youtubeUrlPattern.test(url);
 
       const requestBody: {
-        tiktokUrl?: string;
-        twitterUrl?: string;
+        instagramUrl?: string;
+        youtubeUrl?: string;
         webUrl?: string;
+        contentUrl?: string;
       } = {};
-      if (isTikTok) {
-        requestBody.tiktokUrl = url;
-      } else if (isTwitter) {
-        requestBody.twitterUrl = url;
-      } else {
+
+      if (isInstagram) {
+        requestBody.instagramUrl = url;
+      } else if (isYouTube) {
+        requestBody.youtubeUrl = url;
+      } else if (/^https?:\/\//.test(url)) {
         requestBody.webUrl = url;
+      } else {
+        requestBody.contentUrl = url;
       }
 
-      // Call the transcribe API route
       const response = await fetch("/api/transcribe", {
         method: "POST",
         headers: {
@@ -135,30 +176,28 @@ export function useTikTokAnalysis() {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          errorData.error ||
-            `Failed to analyze ${isTikTok ? "TikTok" : isTwitter ? "Twitter" : "web"} content`
+          errorData.error?.message ||
+            `Failed to analyze ${isInstagram ? "Instagram" : isYouTube ? "YouTube" : "web"} content`
         );
       }
 
-      // const analysis: TikTokAnalysisResult = await response.json();
-      const analysis: TikTokAnalysisResult = await response.json();
-      // Removed console.log statements for API response and analysis data
-      // Removed console.log statements for newsDetection, factCheck, and summary
-      // Removed console.log for no fact-check results
+      const analysis: ContentAnalysisResult = await response.json();
 
-      // Auto-save is disabled by default to prevent duplicates
-      // The user can manually save from the UI if needed
-      if (saveToDb && isAuthenticated && analysis.success && analysis.data) {
+      if (
+        saveToDb &&
+        isAuthenticated &&
+        analysis.success &&
+        analysis.data
+      ) {
         try {
           setIsSaving(true);
 
-          // Use enhanced save function if credibility rating is available
           if (analysis.data.creatorCredibilityRating !== undefined) {
-            await saveTikTokAnalysisWithCredibility({
+            await saveAnalysisWithCredibility({
               videoUrl: analysis.data.metadata.originalUrl,
               transcription: {
                 text: analysis.data.transcription.text,
-                duration: undefined, // API doesn't return duration yet
+                duration: undefined,
                 language: analysis.data.transcription.language,
               },
               metadata: analysis.data.metadata,
@@ -173,13 +212,13 @@ export function useTikTokAnalysis() {
                       relevance: s.relevance,
                     })),
                     results: (analysis.data.factCheck.results || []).map(
-                      (result) => ({
-                        claim: result.claim,
-                        status: result.status,
-                        confidence: result.confidence,
-                        analysis: result.analysis,
-                        sources: result.sources?.map((s) => s.url) || [],
-                        error: result.error,
+                      (item) => ({
+                        claim: item.claim,
+                        status: item.status,
+                        confidence: item.confidence,
+                        analysis: item.analysis,
+                        sources: item.sources?.map((source) => source.url) || [],
+                        error: item.error,
                       })
                     ),
                   }
@@ -188,12 +227,11 @@ export function useTikTokAnalysis() {
               creatorCredibilityRating: analysis.data.creatorCredibilityRating,
             });
           } else {
-            // Fallback to regular save if no credibility rating
-            await saveTikTokAnalysis({
+            await saveAnalysis({
               videoUrl: analysis.data.metadata.originalUrl,
               transcription: {
                 text: analysis.data.transcription.text,
-                duration: undefined, // API doesn't return duration yet
+                duration: undefined,
                 language: analysis.data.transcription.language,
               },
               metadata: analysis.data.metadata,
@@ -208,13 +246,13 @@ export function useTikTokAnalysis() {
                       relevance: s.relevance,
                     })),
                     results: (analysis.data.factCheck.results || []).map(
-                      (result) => ({
-                        claim: result.claim,
-                        status: result.status,
-                        confidence: result.confidence,
-                        analysis: result.analysis,
-                        sources: result.sources?.map((s) => s.url) || [],
-                        error: result.error,
+                      (item) => ({
+                        claim: item.claim,
+                        status: item.status,
+                        confidence: item.confidence,
+                        analysis: item.analysis,
+                        sources: item.sources?.map((source) => source.url) || [],
+                        error: item.error,
                       })
                     ),
                   }
@@ -224,11 +262,6 @@ export function useTikTokAnalysis() {
           }
         } catch (saveError) {
           console.error("Failed to save analysis to database:", saveError);
-          console.error(
-            "Save error details:",
-            JSON.stringify(saveError, null, 2)
-          );
-          // Don't fail the entire operation if saving fails
         } finally {
           setIsSaving(false);
         }
@@ -237,13 +270,9 @@ export function useTikTokAnalysis() {
       setResult(analysis);
       return analysis;
     } catch (error) {
-      const errorResult = {
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Unknown error occurred",
-      };
-      setResult(errorResult);
-      return errorResult;
+      const message =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      return failEarly(message);
     } finally {
       setIsLoading(false);
     }
@@ -255,7 +284,7 @@ export function useTikTokAnalysis() {
   };
 
   return {
-    analyzeTikTok,
+    analyzeContent,
     isLoading,
     isSaving,
     result,

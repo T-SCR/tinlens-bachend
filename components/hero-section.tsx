@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -19,8 +19,9 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   BookmarkIcon,
+  Megaphone,
 } from "lucide-react";
-import { useTikTokAnalysis } from "@/lib/hooks/use-tiktok-analysis";
+import { useContentAnalysis } from "@/lib/hooks/use-content-analysis";
 import { useSaveTikTokAnalysisWithCredibility } from "@/lib/hooks/use-saved-analyses";
 import { useConvexAuth } from "convex/react";
 import { toast } from "sonner";
@@ -54,53 +55,30 @@ export function HeroSection({ initialUrl = "" }: HeroSectionProps) {
   const [isAnalysisExpanded, setIsAnalysisExpanded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [isMockLoading, setIsMockLoading] = useState(false);
-  const [mockResult, setMockResult] = useState<{
-    success: boolean;
-    data: {
-      transcription: {
-        text: string;
-        segments: unknown[];
-        language: string;
-      };
-      metadata: {
-        title: string;
-        description: string;
-        creator: string;
-        originalUrl: string;
-        platform: string;
-      };
-      factCheck: {
-        verdict: string;
-        confidence: number;
-        explanation: string;
-        content: string;
-        sources: Array<{
-          title: string;
-          url: string;
-          source: string;
-          relevance: number;
-        }>;
-        isVerified: boolean;
-      };
-      requiresFactCheck: boolean;
-      creatorCredibilityRating: number;
-      newsDetection: {
-        hasNewsContent: boolean;
-        confidence: number;
-        newsKeywordsFound: string[];
-        potentialClaims: number;
-        needsFactCheck: boolean;
-        contentType: string;
-      };
-    };
-  } | null>(null);
-  const { analyzeTikTok, isLoading, result, reset } = useTikTokAnalysis();
+  const { analyzeContent, isLoading, result, reset } = useContentAnalysis();
   const { isAuthenticated } = useConvexAuth();
   const saveTikTokAnalysisWithCredibility =
     useSaveTikTokAnalysisWithCredibility();
   const router = useRouter();
   const { t } = useLanguage();
+
+  const getPlatformLabel = (platform?: string) => {
+    switch (platform) {
+      case "instagram":
+        return "Instagram";
+      case "youtube":
+        return "YouTube";
+      case "web":
+        return "Web";
+      default:
+        return platform
+          ? platform.charAt(0).toUpperCase() + platform.slice(1)
+          : "Web";
+    }
+  };
+
+  const getContentTypeLabel = (platform?: string) =>
+    !platform || platform === "web" ? "Article / Web" : "Video Content";
 
   useEffect(() => {
     setUrl(initialUrl);
@@ -128,7 +106,7 @@ export function HeroSection({ initialUrl = "" }: HeroSectionProps) {
     router.replace(`?${params.toString()}`);
 
     toast.info(t.analysisStarted);
-    await analyzeTikTok(url.trim());
+    await analyzeContent(url.trim());
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -140,110 +118,7 @@ export function HeroSection({ initialUrl = "" }: HeroSectionProps) {
     setUrl("");
     setIsAnalysisExpanded(false);
     setIsSaved(false);
-    setMockResult(null);
     reset();
-  };
-
-  const handleMockAnalysis = async () => {
-    if (!url.trim()) {
-      toast.error(t.enterUrl);
-      return;
-    }
-
-    setIsMockLoading(true);
-    toast.info("🧪 Running Mock Analysis (Free!)");
-
-    // Simulate API processing time
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
-    // Generate realistic mock data
-    const mockData = {
-      success: true,
-      data: {
-        transcription: {
-          text: `This is a mock transcription of the content from ${url}. 
-
-The AI has simulated transcribing the audio/video content. In this mock analysis, we're demonstrating how the system would extract spoken words, identify key claims, and prepare them for fact-checking.
-
-Key simulated claims found:
-- Mock claim about current events
-- Simulated statement requiring verification
-- Example of content that would trigger fact-checking processes`,
-          segments: [],
-          language: "en",
-        },
-        metadata: {
-          title: "Mock Content Analysis - Demo Mode",
-          description:
-            "This is a simulated analysis showing how TinLens would process real content without using expensive APIs.",
-          creator: "MockCreator123",
-          originalUrl: url,
-          platform: url.includes("tiktok")
-            ? "tiktok"
-            : url.includes("twitter")
-              ? "twitter"
-              : "web",
-        },
-        factCheck: {
-          verdict: "verified" as const,
-          confidence: 85,
-          explanation: `**Mock Fact-Check Analysis:**
-
-This is a demonstration of how our AI fact-checking system would analyze the content. In a real scenario, this would involve:
-
-**Verification Process:**
-- Web search across credible news sources
-- Cross-referencing with fact-checking databases  
-- Analysis of source credibility and bias
-- Evaluation of evidence quality
-
-**Mock Findings:**
-- **Primary Claims**: The content contains 2-3 verifiable statements
-- **Source Quality**: Simulated cross-reference with Reuters, AP News, BBC
-- **Confidence Level**: High confidence based on multiple corroborating sources
-- **Recommendation**: Content appears to be factually accurate based on available evidence
-
-**Note**: This is a demonstration using mock data to show the analysis process without incurring API costs.`,
-          content:
-            "Mock content summary: The system has analyzed the provided URL and generated this demo fact-check result to show how real analysis would work.",
-          sources: [
-            {
-              title: "Mock Reuters Article",
-              url: "https://reuters.com/mock-article",
-              source: "reuters.com",
-              relevance: 0.9,
-            },
-            {
-              title: "Mock BBC News Report",
-              url: "https://bbc.com/mock-report",
-              source: "bbc.com",
-              relevance: 0.85,
-            },
-            {
-              title: "Mock AP News Coverage",
-              url: "https://apnews.com/mock-coverage",
-              source: "apnews.com",
-              relevance: 0.8,
-            },
-          ],
-          isVerified: true,
-        },
-        requiresFactCheck: true,
-        creatorCredibilityRating: 7.2,
-        newsDetection: {
-          hasNewsContent: true,
-          confidence: 0.9,
-          newsKeywordsFound: ["breaking", "reports", "officials"],
-          potentialClaims: 3,
-          needsFactCheck: true,
-          contentType: "news_factual",
-        },
-      },
-    };
-
-    setMockResult(mockData);
-    setIsMockLoading(false);
-    toast.success("🎭 Mock Analysis Complete! (No API costs incurred)");
   };
 
   const handleSaveAnalysis = async () => {
@@ -252,7 +127,7 @@ This is a demonstration of how our AI fact-checking system would analyze the con
       return;
     }
 
-    // Check if already saved by the automatic save in useTikTokAnalysis hook
+    // Check if already saved by the automatic save in the analysis hook
     // This prevents duplicate saves
     if (isSaved) {
       toast.info(t.alreadySaved);
@@ -400,6 +275,10 @@ This is a demonstration of how our AI fact-checking system would analyze the con
           <Badge variant="secondary" className="mb-4">
             AI-Powered Fact Checking
           </Badge>
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary">
+            <Megaphone className="h-4 w-4" />
+            <span>Launch promo: all new signups unlock TinLens Pro (unlimited) for free.</span>
+          </div>
           <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl flex flex-wrap items-center justify-center gap-4">
             <span>Detect</span>
             <TextRotate
@@ -421,9 +300,9 @@ This is a demonstration of how our AI fact-checking system would analyze the con
               className="flex-1 h-12 text-base min-w-0"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              disabled={isLoading || isMockLoading}
+              disabled={isLoading}
               onKeyDown={(e: React.KeyboardEvent) => {
-                if (e.key === 'Enter' && !isLoading && !isMockLoading && url.trim()) {
+                if (e.key === 'Enter' && !isLoading && url.trim()) {
                   e.preventDefault();
                   const fakeEvent = new Event('submit') as unknown as React.FormEvent<HTMLFormElement>;
                   handleSubmit(fakeEvent);
@@ -451,64 +330,24 @@ This is a demonstration of how our AI fact-checking system would analyze the con
             </ShinyButton>
           </div>
 
-          {/* Mock Analysis Button */}
-          <div className="flex justify-center">
-            <Button
-              onClick={handleMockAnalysis}
-              variant="outline"
-              size="lg"
-              className="px-6 h-12 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-2 border-dashed border-purple-300 dark:border-purple-700 hover:border-purple-400 dark:hover:border-purple-600"
-              disabled={isLoading || isMockLoading || !url.trim()}
-            >
-              {isMockLoading ? (
-                <LoaderIcon className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <span className="mr-2">🧪</span>
-              )}
-              {isMockLoading ? "Running Mock..." : "Try Mock Demo (Free!)"}
-            </Button>
-          </div>
-
           <p className="text-sm text-muted-foreground text-center">
-            Try it with any TikTok/Twitter(X) video URL to see the magic happen
+            Use any live Instagram Reel, YouTube video, or public article link. TinLens runs the full verification—no demo or synthetic responses.
           </p>
-
-          {/* Mock Demo Description */}
-          <div className="text-center">
-            <p className="text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-4 py-2 rounded-lg inline-block">
-              💡 The mock demo simulates the full analysis process with
-              realistic data—perfect for testing without API costs!
-            </p>
-          </div>
         </div>
-
         {/* Results */}
-        {(result || mockResult) && (
+        {(result) && (
           <div className="mx-auto max-w-4xl mt-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  {result?.success || mockResult?.success ? (
-                    <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <AlertCircleIcon className="h-5 w-5 text-red-500" />
-                  )}
-                  {result?.success || mockResult?.success
-                    ? mockResult
-                      ? "🧪 Mock Analysis Complete"
-                      : t.analysisComplete
-                    : "Analysis Failed"}
+                  {result?.success ? t.analysisComplete : "Analysis Failed"}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {(result?.success && result.data) ||
-                (mockResult?.success && mockResult.data) ? (
+                {(result?.success && result.data) ? (
                   (() => {
                     // Determine which data source to use
-                    const currentData =
-                      result?.success && result.data
-                        ? result.data
-                        : mockResult?.data;
+                    const currentData = result.data;
                     if (!currentData) return null;
 
                     return (
@@ -573,17 +412,15 @@ This is a demonstration of how our AI fact-checking system would analyze the con
                             <div className="flex items-center justify-between">
                               <span className="text-sm">Source Platform:</span>
                               <Badge variant="secondary">
-                                {currentData.metadata.platform === "twitter"
-                                  ? "Twitter/X"
-                                  : "TikTok"}
+                                {getPlatformLabel(currentData.metadata.platform)}
                               </Badge>
                             </div>
                             <div className="flex items-center justify-between">
                               <span className="text-sm">Content Type:</span>
                               <Badge variant="outline">
-                                {currentData.metadata.platform === "twitter"
-                                  ? "Social Post"
-                                  : "Video Content"}
+                                {getContentTypeLabel(
+                                  currentData.metadata.platform
+                                )}
                               </Badge>
                             </div>
                             <div className="flex items-center justify-between">
@@ -931,3 +768,4 @@ This is a demonstration of how our AI fact-checking system would analyze the con
 }
 
 export default HeroSection;
+

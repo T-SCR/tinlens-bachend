@@ -1,15 +1,27 @@
+import Image from "next/image";
 import { SignIn } from "@clerk/nextjs";
-import { SearchCheck } from "lucide-react";
 
 export default function Page() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-6">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <SearchCheck className="h-6 w-6" />
-          </div>
-          <span className="text-2xl font-bold">TinLens</span>
+        <div className="mb-2 flex items-center justify-center gap-3">
+          <Image
+            src="/Untitled (200 x 50 mm) (5).png"
+            alt="TinLens logo"
+            width={160}
+            height={40}
+            className="h-10 w-auto dark:hidden"
+            priority
+          />
+          <Image
+            src="/Untitled (200 x 50 mm) (4).png"
+            alt="TinLens logo"
+            width={160}
+            height={40}
+            className="hidden h-10 w-auto dark:block"
+            priority
+          />
         </div>
         <SignIn />
       </div>

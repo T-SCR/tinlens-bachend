@@ -6,6 +6,27 @@ import {
   mutation,
 } from "./_generated/server";
 
+type PlanTier = "free" | "plus" | "pro";
+
+const PLAN_CREDIT_ALLOCATIONS: Record<PlanTier, number> = {
+  free: 25,
+  plus: 150,
+  pro: -1, // sentinel for unlimited usage
+};
+
+const DEFAULT_PLAN: PlanTier = "free";
+
+function resolvePlan(rawPlan?: unknown): PlanTier {
+  if (rawPlan === "plus" || rawPlan === "pro") {
+    return rawPlan;
+  }
+  return DEFAULT_PLAN;
+}
+
+function allocationForPlan(plan: PlanTier) {
+  return PLAN_CREDIT_ALLOCATIONS[plan] ?? PLAN_CREDIT_ALLOCATIONS[DEFAULT_PLAN];
+}
+
 // Public mutation to create user from client (fallback to webhooks)
 export const createUser = mutation({
   args: {
@@ -34,6 +55,7 @@ export const createUser = mutation({
 
     // Create new user
     const now = Date.now();
+    const plan = DEFAULT_PLAN;
     return await ctx.db.insert("users", {
       clerkId: args.clerkId,
       email: args.email,
@@ -41,8 +63,10 @@ export const createUser = mutation({
       lastName: args.lastName,
       imageUrl: args.imageUrl,
       username: args.username,
-      credits: 10, // Give 10 free credits to new users
+      plan,
+      credits: allocationForPlan(plan),
       totalCreditsUsed: 0,
+      creditsAddedAt: now,
       createdAt: now,
       updatedAt: now,
     });
@@ -74,6 +98,10 @@ export const updateOrCreateUser = internalMutation({
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", clerkUser.id))
       .unique();
 
+    const incomingPlan = resolvePlan(
+      clerkUser.public_metadata?.plan || clerkUser.private_metadata?.plan
+    );
+
     const userData = {
       clerkId: clerkUser.id,
       email: clerkUser.email_addresses[0]?.email_address || "",
@@ -81,19 +109,34 @@ export const updateOrCreateUser = internalMutation({
       lastName: clerkUser.last_name || undefined,
       imageUrl: clerkUser.image_url || undefined,
       username: clerkUser.username || undefined,
+      plan: incomingPlan,
       createdAt: clerkUser.created_at,
       updatedAt: clerkUser.updated_at,
     };
 
     if (existingUser) {
-      // Update existing user
-      return await ctx.db.patch(existingUser._id, userData);
+      const planChanged = existingUser.plan !== incomingPlan;
+      const updatedCredits =
+        incomingPlan === "pro"
+          ? -1
+          : planChanged
+            ? allocationForPlan(incomingPlan)
+            : existingUser.credits;
+
+      return await ctx.db.patch(existingUser._id, {
+        ...userData,
+        credits: updatedCredits,
+        creditsAddedAt: planChanged
+          ? Date.now()
+          : existingUser.creditsAddedAt ?? Date.now(),
+      });
     } else {
-      // Create new user with default credits
+      const now = Date.now();
       return await ctx.db.insert("users", {
         ...userData,
-        credits: 10, // Give 10 free credits to new users
+        credits: allocationForPlan(incomingPlan),
         totalCreditsUsed: 0,
+        creditsAddedAt: now,
       });
     }
   },
@@ -145,10 +188,19 @@ export const getCurrentUser = query({
       return null;
     }
 
-    return await ctx.db
+    const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
       .unique();
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      ...user,
+      hasUnlimitedCredits: user.plan === "pro" || user.credits === -1,
+    };
   },
 });
 

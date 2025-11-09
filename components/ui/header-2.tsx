@@ -6,6 +6,7 @@ import { MenuToggleIcon } from '@/components/ui/menu-toggle-icon';
 import { useScroll } from '@/components/ui/use-scroll';
 import Link from 'next/link';
 import Image from 'next/image';
+import { CreditsDisplay } from '@/components/credits-display';
 
 export function Header() {
 	const [open, setOpen] = React.useState(false);
@@ -32,6 +33,10 @@ export function Header() {
 		{
 			label: 'Analyses',
 			href: '/analyses',
+		},
+		{
+			label: 'Credits',
+			href: '/credits',
 		},
 	];
 
@@ -92,6 +97,7 @@ export function Header() {
 							{link.label}
 						</Link>
 					))}
+					<CreditsDisplay />
 					<Link href="/sign-in">
 						<Button variant="outline">Sign In</Button>
 					</Link>
@@ -130,6 +136,7 @@ export function Header() {
 								{link.label}
 							</Link>
 						))}
+						<CreditsDisplay className="w-full justify-center border border-dashed px-3 py-1.5" />
 					</div>
 					<div className="flex flex-col gap-2">
 						<Link href="/sign-in" className="w-full">
