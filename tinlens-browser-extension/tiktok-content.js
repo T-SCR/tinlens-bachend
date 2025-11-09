@@ -127,7 +127,7 @@
     btn.id = "tt-localhost-btn";
     btn.style.cssText = buttonStyle;
     btn.setAttribute("aria-label", "Send to localhost");
-    btn.setAttribute("title", "CheckMate fact checker");
+    btn.setAttribute("title", "TinLens fact checker");
 
     // Add hover effects
     btn.addEventListener('mouseenter', () => {

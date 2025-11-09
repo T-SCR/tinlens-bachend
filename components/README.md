@@ -1,6 +1,6 @@
 # Components Directory
 
-This directory contains all reusable UI components for the Checkmate application, organized by functionality and purpose.
+This directory contains all reusable UI components for the TinLens application, organized by functionality and purpose.
 
 ## Directory Structure
 

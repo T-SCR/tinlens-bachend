@@ -17,9 +17,9 @@ import { NewsPageContent } from "@/components/news";
  * Metadata for the news page
  */
 export const metadata: Metadata = {
-  title: "Trending News Analysis | Checkmate",
+  title: "Trending News Analysis | TinLens",
   description:
-    "Discover trending content analyses, credible sources, and fact-checked information from across social media platforms.",
+    "Explore fast-rising rumor clusters, credibility insights, and fact-checked information powered by TinLens.",
   keywords: [
     "news analysis",
     "fact checking",

@@ -28,12 +28,12 @@ export async function generateMetadata({
   const platform =
     typeof searchParamsData.platform === "string"
       ? searchParamsData.platform
-      : "tiktok";
+      : "web";
 
   const decodedCreatorId = decodeURIComponent(creatorId);
 
   return {
-    title: `${decodedCreatorId} - Creator Analysis | Checkmate`,
+    title: `${decodedCreatorId} - Creator Analysis | TinLens`,
     description: `View credibility analysis, fact-check results, and community insights for ${decodedCreatorId} on ${platform}.`,
     keywords: [
       "creator analysis",

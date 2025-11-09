@@ -2,7 +2,7 @@
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "toggleBlocklist",
-    title: "Toggle CheckMate Button for this site",
+    title: "Toggle TinLens Button for this site",
     contexts: ["page"]
   });
 });
@@ -15,8 +15,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     const hostname = url.hostname.toLowerCase();
     
     // Get the current blocklist
-    chrome.storage.local.get(['checkmate-blocklist'], (result) => {
-      let blocklist = result['checkmate-blocklist'] || [];
+    chrome.storage.local.get(['tinlens-blocklist'], (result) => {
+      let blocklist = result['tinlens-blocklist'] || [];
       
       if (Array.isArray(blocklist)) {
         const isBlocked = blocklist.includes(hostname);
@@ -24,19 +24,19 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         if (isBlocked) {
           // Remove from blocklist
           blocklist = blocklist.filter(site => site !== hostname);
-          chrome.storage.local.set({ 'checkmate-blocklist': blocklist }, () => {
+          chrome.storage.local.set({ 'tinlens-blocklist': blocklist }, () => {
             chrome.tabs.sendMessage(tab.id, { 
               action: 'showNotification',
-              message: `CheckMate button enabled for ${hostname}`
+              message: `TinLens button enabled for ${hostname}`
             });
           });
         } else {
           // Add to blocklist
           blocklist.push(hostname);
-          chrome.storage.local.set({ 'checkmate-blocklist': blocklist }, () => {
+          chrome.storage.local.set({ 'tinlens-blocklist': blocklist }, () => {
             chrome.tabs.sendMessage(tab.id, { 
               action: 'showNotification',
-              message: `CheckMate button disabled for ${hostname}`
+              message: `TinLens button disabled for ${hostname}`
             });
           });
         }

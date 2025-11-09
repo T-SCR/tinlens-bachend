@@ -1,5 +1,5 @@
 (() => {
-  if (document.getElementById("checkmate-generic-btn")) {
+  if (document.getElementById("tinlens-generic-btn")) {
     return;
   }
 
@@ -35,12 +35,12 @@
   // Get or initialize the whitelist from chrome.storage
   const getWhitelist = () => {
     return new Promise((resolve) => {
-      chrome.storage.local.get(['checkmate-whitelist'], (result) => {
-        if (!result['checkmate-whitelist']) {
-          chrome.storage.local.set({ 'checkmate-whitelist': defaultWhitelist });
+      chrome.storage.local.get(['tinlens-whitelist'], (result) => {
+        if (!result['tinlens-whitelist']) {
+          chrome.storage.local.set({ 'tinlens-whitelist': defaultWhitelist });
           resolve(defaultWhitelist);
         } else {
-          resolve(result['checkmate-whitelist']);
+          resolve(result['tinlens-whitelist']);
         }
       });
     });
@@ -51,7 +51,7 @@
     const whitelist = await getWhitelist();
     if (!whitelist.includes(site)) {
       whitelist.push(site);
-      await chrome.storage.local.set({ 'checkmate-whitelist': whitelist });
+      await chrome.storage.local.set({ 'tinlens-whitelist': whitelist });
     }
   };
 
@@ -61,7 +61,7 @@
     const index = whitelist.indexOf(site);
     if (index > -1) {
       whitelist.splice(index, 1);
-      await chrome.storage.local.set({ 'checkmate-whitelist': whitelist });
+      await chrome.storage.local.set({ 'tinlens-whitelist': whitelist });
     }
   };
 
@@ -69,8 +69,8 @@
   const isBlocked = () => {
     return new Promise((resolve) => {
       const currentHostname = window.location.hostname.toLowerCase();
-      chrome.storage.local.get(['checkmate-blocklist'], (result) => {
-        const blocklist = result['checkmate-blocklist'] || [];
+      chrome.storage.local.get(['tinlens-blocklist'], (result) => {
+        const blocklist = result['tinlens-blocklist'] || [];
         resolve(blocklist.includes(currentHostname));
       });
     });
@@ -135,7 +135,7 @@
     }
 
     const btn = document.createElement("button");
-    btn.id = "checkmate-generic-btn";
+    btn.id = "tinlens-generic-btn";
     btn.style.cssText = `
       position: fixed;
       right: 20px;
@@ -156,8 +156,8 @@
       justify-content: center;
       font-size: 24px;
     `;
-    btn.setAttribute("aria-label", "Analyze with CheckMate");
-    btn.setAttribute("title", "Analyze with CheckMate");
+    btn.setAttribute("aria-label", "Analyze with TinLens");
+    btn.setAttribute("title", "Analyze with TinLens");
 
     btn.addEventListener('mouseenter', () => {
       btn.style.transform = 'translateY(-50%) scale(1.1)';
@@ -198,7 +198,7 @@
   }
 
   // Expose whitelist management to global scope for debugging and manual management
-  window.checkmate = {
+  window.tinlens = {
     addToWhitelist,
     removeFromWhitelist,
     getWhitelist,

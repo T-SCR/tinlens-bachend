@@ -347,7 +347,7 @@ export const translations: Record<Language, Translations> = {
     signIn: "Log Masuk",
 
     // Hero Section
-    heroTitle: "Sahkan Kandungan dengan Checkmate",
+    heroTitle: "Sahkan Kandungan dengan TinLens",
     heroSubtitle:
       "Tampalkan mana-mana URL TikTok, X (Twitter), blog, atau berita untuk mendapat transkripsi segera, analisis, dan penilaian kredibiliti dikuasakan oleh AI canggih.",
     urlPlaceholder: "Masukkan URL  (cth., https://vm.tiktok.com/...)",

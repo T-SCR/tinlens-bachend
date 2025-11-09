@@ -1,17 +1,10 @@
-import { PageLayout } from "@/components/ui/page-layout";
-import { HomePageContent } from "@/components/home-page-content";
+import { HomePageContent } from "@/components/home-page-content"
+import { PageLayout } from "@/components/ui/page-layout"
 
-interface HomeProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}
-
-export default async function Home({ searchParams }: HomeProps) {
-  const params = await searchParams;
-  const linkParam = typeof params.link === "string" ? params.link : "";
-
+export default function Home() {
   return (
     <PageLayout variant="gradient">
-      <HomePageContent initialUrl={linkParam} />
+      <HomePageContent />
     </PageLayout>
-  );
+  )
 }
