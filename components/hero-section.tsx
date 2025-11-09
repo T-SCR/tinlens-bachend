@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import {
   PlayIcon,
   LoaderIcon,
@@ -29,6 +28,7 @@ import { AnalysisRenderer } from "@/components/analysis-renderer";
 import { useLanguage } from "@/components/language-provider";
 import Link from "next/link";
 import { TextRotate } from "@/components/ui/text-rotate";
+import AnimatedGradientBackground from "@/components/ui/animated-gradient-background";
 
 interface HeroSectionProps {
   initialUrl?: string;
@@ -376,56 +376,45 @@ This is a demonstration of how our AI fact-checking system would analyze the con
   };
 
   return (
-    <section className="py-24 md:py-32 relative">
-      {/* Analysis Loading Overlay */}
-      {(isLoading || isMockLoading) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <Card className="w-full max-w-md mx-auto shadow-2xl border-primary border-2 animate-in fade-in-0 zoom-in-95">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-primary">
-                <LoaderIcon className="h-6 w-6 animate-spin" />
-                Analyzing Content...
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Progress value={70} />
-              <div className="text-base text-muted-foreground text-center">
-                <p>
-                  We are transcribing the video, detecting news content, and
-                  fact-checking claims using AI.
-                </p>
-                <p className="mt-2">
-                  This may take up to a minute for longer videos. Please don’t
-                  close this tab.
-                </p>
-                <p className="mt-4 text-xs text-gray-400">
-                  Checkmate is verifying sources, analyzing credibility, and
-                  summarizing results for you.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      <div className="text-center">
-        <Badge variant="secondary" className="mb-4">
-          AI-Powered Fact Checking
-        </Badge>
-        <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl flex flex-wrap items-center justify-center gap-4">
-          <span>Detect</span>
-          <TextRotate
-            texts={["Misinformation", "Fake News", "Deepfakes", "Propaganda"]}
-            mainClassName="text-primary inline-flex"
-            rotationInterval={2500}
-            staggerDuration={0.025}
-            staggerFrom="last"
-          />
-          <span>with AI</span>
-        </h1>
-        <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
-          {t.heroSubtitle}
-        </p>
-        <div className="mx-auto max-w-2xl space-y-4">
+    <section className="relative w-full min-h-screen py-24 px-4 overflow-hidden">
+      {/* Animated Background */}
+      <AnimatedGradientBackground
+        startingGap={120}
+        Breathing={true}
+        gradientColors={[
+          "#0A0A0A",
+          "#2E8FFF",
+          "#00C2FF",
+          "#2E8FFF",
+          "#0A0A0A"
+        ]}
+        gradientStops={[0, 40, 50, 60, 100]}
+        breathingRange={8}
+        animationSpeed={0.015}
+        topOffset={20}
+      />
+
+      {/* Content */}
+      <div className="relative z-10">
+        <div className="text-center">
+          <Badge variant="secondary" className="mb-4">
+            AI-Powered Fact Checking
+          </Badge>
+          <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl flex flex-wrap items-center justify-center gap-4">
+            <span>Detect</span>
+            <TextRotate
+              texts={["Misinformation", "Fake News", "Deepfakes", "Propaganda"]}
+              mainClassName="text-primary inline-flex"
+              rotationInterval={2500}
+              staggerDuration={0.025}
+              staggerFrom="last"
+            />
+            <span>with AI</span>
+          </h1>
+          <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
+            {t.heroSubtitle}
+          </p>
+          <div className="mx-auto max-w-2xl space-y-4">
           <div className="flex gap-3 items-center justify-center">
             <Input
               placeholder={t.urlPlaceholder}
@@ -936,6 +925,9 @@ This is a demonstration of how our AI fact-checking system would analyze the con
           </div>
         )}
       </div>
+      </div>
     </section>
   );
 }
+
+export default HeroSection;

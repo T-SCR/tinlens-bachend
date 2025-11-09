@@ -1,4 +1,4 @@
-import { NewHeroSection } from "@/components/new-hero-section";
+import HeroSection from "@/components/hero-section";
 import { RedesignedHowItWorks } from "@/components/redesigned-how-it-works";
 import { FinalCTA } from "@/components/final-cta";
 
@@ -10,7 +10,7 @@ export default async function Home({
   const { link } = await searchParams;
   return (
     <div>
-      <NewHeroSection initialUrl={link} />
+      <HeroSection initialUrl={link} />
       <RedesignedHowItWorks />
       <FinalCTA />
     </div>
