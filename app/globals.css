@@ -1,6 +1,72 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Database visualization styles */
+.database-visual {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 380px;
+}
+
+.database-orbit {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.database-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.database-node--client {
+  transform: rotate(calc(var(--node-index) * 120deg)) translateY(-130px);
+}
+
+.database-node--api {
+  bottom: 20px;
+  right: 20px;
+}
+
+.database-node-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.database-connections {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.database-connection {
+  position: absolute;
+  width: 2px;
+  height: 100px;
+  background: linear-gradient(to bottom, rgba(46, 143, 255, 0.5), transparent);
+  top: 50%;
+  left: 50%;
+  transform-origin: top center;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {

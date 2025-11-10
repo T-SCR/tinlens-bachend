@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useConvexAuth } from 'convex/react';
+import { UserButton } from '@clerk/nextjs';
 
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -112,9 +113,19 @@ export function Header() {
 					</DropdownMenu>
 					<CreditsDisplay />
 					{isAuthenticated ? (
-						<Link href="/dashboard">
-							<Button>Dashboard</Button>
-						</Link>
+						<>
+							<Link href="/dashboard">
+								<Button>Dashboard</Button>
+							</Link>
+							<UserButton 
+								appearance={{
+									elements: {
+										avatarBox: 'h-9 w-9',
+									},
+								}}
+								afterSignOutUrl="/"
+							/>
+						</>
 					) : (
 						<>
 							<Link href="/sign-in">
@@ -172,9 +183,22 @@ export function Header() {
 					</div>
 					<div className="flex flex-col gap-2">
 						{isAuthenticated ? (
-							<Link href="/dashboard" className="w-full">
-								<Button className="w-full">Dashboard</Button>
-							</Link>
+							<>
+								<Link href="/dashboard" className="w-full">
+									<Button className="w-full">Dashboard</Button>
+								</Link>
+								<div className="flex w-full items-center justify-center gap-2 rounded-lg border border-border/50 bg-card p-3">
+									<UserButton 
+										appearance={{
+											elements: {
+												avatarBox: 'h-10 w-10',
+											},
+										}}
+										afterSignOutUrl="/"
+									/>
+									<span className="text-sm font-medium">My Profile</span>
+								</div>
+							</>
 						) : (
 							<>
 								<Link href="/sign-in" className="w-full">

@@ -50,12 +50,12 @@ export function EnhancedHero() {
       >
         <div className="relative z-10 mx-auto max-w-4xl text-center">
           <div className="mb-6 inline-flex flex-col sm:flex-row items-center gap-3 rounded-full border border-white/20 bg-gradient-to-r from-white/10 to-white/5 px-6 py-3 text-sm font-medium text-white shadow-[0_10px_40px_-20px_rgba(0,0,0,0.8)] backdrop-blur-xl">
-            <span className="rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.25em] text-white">
-              Know before you share
+            <span className="rounded-full border border-amber-400/40 bg-amber-500/20 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.25em] text-amber-200">
+              🎉 Limited Time
             </span>
             <div className="flex items-center gap-2 text-white/90">
-              <Megaphone className="h-4 w-4 text-primary animate-pulse" />
-              <span className="font-medium">Landing is public. Dashboard unlocks advanced features after sign-in.</span>
+              <Megaphone className="h-4 w-4 text-amber-300 animate-pulse" />
+              <span className="font-medium">TinLens <span className="font-bold text-primary">Pro Plan</span> FREE for Mumbai Hacks participants!</span>
             </div>
           </div>
 

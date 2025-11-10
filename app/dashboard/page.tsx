@@ -80,8 +80,14 @@ export default function DashboardPage() {
               <Skeleton className="h-12 w-32 bg-white/20" />
             ) : (
               <p className="text-5xl font-semibold">
-                {isUnlimited || creditsRemaining === -1 ? "Unlimited" : creditsRemaining}
-                {!isUnlimited && creditsRemaining !== -1 && <span className="ml-2 text-base font-normal uppercase text-white/60">credits</span>}
+                {isUnlimited || creditsRemaining === -1 ? (
+                  <span className="text-7xl">∞</span>
+                ) : (
+                  <>
+                    {creditsRemaining}
+                    <span className="ml-2 text-base font-normal uppercase text-white/60">credits</span>
+                  </>
+                )}
               </p>
             )}
             <p className="mt-1 text-sm uppercase tracking-[0.4em] text-white/50">Available credits</p>
