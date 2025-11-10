@@ -1,3 +1,5 @@
+'use client'
+
 import {
   BadgeCheck,
   Cpu,
@@ -12,7 +14,7 @@ import { AnimatedHero } from "@/components/ui/animated-hero"
 
 const features = [
   {
-    title: "Confidence Score (0–100)",
+    title: "Confidence Score (0-100)",
     description:
       "Blends source credibility, evidence coverage, semantic fit, and freshness. Safe Mode lights up automatically below 50.",
     icon: BadgeCheck,
@@ -107,7 +109,7 @@ export function FeatureShowcase() {
                   <div key={step} className="flex items-center gap-2">
                     <span className="text-foreground">{step}</span>
                     {index !== pipeline.length - 1 && (
-                      <span className="text-muted-foreground">→</span>
+                      <span className="text-muted-foreground">-&gt;</span>
                     )}
                   </div>
                 ))}

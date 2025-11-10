@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { Github, Linkedin, Send, Twitter } from "lucide-react"
 
+import { FooterBackgroundGradient, TextHoverEffect } from "@/components/ui/hover-footer"
+
 const footerColumns = [
   {
     title: "Product",
@@ -49,8 +51,9 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="border-t bg-background/90 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-4 py-12 md:px-6">
+    <footer className="relative overflow-hidden border-t bg-background/90">
+      <FooterBackgroundGradient />
+      <div className="relative mx-auto max-w-6xl px-4 py-12 md:px-6">
         <div className="grid gap-10 lg:grid-cols-[1.2fr_2fr]">
           <div className="space-y-4">
             <p className="text-2xl font-semibold">TinLens</p>
@@ -98,12 +101,15 @@ export function Footer() {
               href={href}
               rel="noreferrer"
               target="_blank"
-              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition hover:border-primary hover:text-primary"
+              className="flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-4 py-2 text-sm text-muted-foreground transition hover:border-primary hover:text-primary"
             >
               <Icon className="h-4 w-4" />
               {label}
             </a>
           ))}
+        </div>
+        <div className="relative mt-10 hidden h-56 w-full lg:block">
+          <TextHoverEffect text="TinLens" className="text-muted-foreground/30" />
         </div>
       </div>
     </footer>

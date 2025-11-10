@@ -3,50 +3,73 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { 
-  Search, 
-  FileText, 
-  Database, 
-  Scale, 
-  MessageSquare 
+import {
+  ActivitySquare,
+  BookCheck,
+  Brain,
+  MessageSquare,
+  Newspaper,
+  Share2,
+  Workflow,
 } from "lucide-react";
 
 const steps = [
   {
     number: "01",
-    title: "Paste Content Link",
-    description: "Paste any public X (Twitter), YouTube, Instagram post, or article URL into our secure analyzer.",
-    icon: Search,
-    features: ["Works with X (Twitter) & more", "Secure URL processing", "Multi-platform support"]
+    title: "Detector",
+    description:
+      "Watches public feeds and user submissions for spikes, keywords, and velocity anomalies to spot likely claims.",
+    icon: ActivitySquare,
+    features: ["Velocity + risk scoring", "Language + geo hints", "Spam/threat filters"],
   },
   {
     number: "02",
-    title: "AI Transcription & Extraction",
-    description: "AI extracts text from posts and transcribes video/audio using OpenAI Whisper.",
-    icon: FileText,
-    features: ["OpenAI Whisper for audio", "Extracts post text", "Multi-language support"]
+    title: "Claimifier",
+    description:
+      "Normalizes the snippet into atomic claims, extracts entities/dates/numbers, and drafts smart queries.",
+    icon: Brain,
+    features: ["Atomic claims", "Entity + date extraction", "Multilingual parsing"],
   },
   {
     number: "03",
-    title: "News & Claim Detection",
-    description: "Detects news, opinions, and factual claims in the content for verification.",
-    icon: Database,
-    features: ["AI claim extraction", "News vs opinion detection", "Context analysis"]
+    title: "Retriever",
+    description:
+      "Runs semantic + lexical search across fact-check archives, Qdrant/FAISS embeddings, news APIs, and official datasets.",
+    icon: Newspaper,
+    features: ["Trusted sources first", "Recency + credibility rank", "Media dedupe"],
   },
   {
     number: "04",
-    title: "Fact-Checking & Analysis",
-    description: "Verifies claims using web search, databases, and evaluates source credibility.",
-    icon: Scale,
-    features: ["Web & database verification", "Credibility checks", "Source reliability analysis"]
+    title: "Veracity Judge",
+    description:
+      "Performs stance/NLI reasoning over the top evidence, calculates transparent sub-scores, and handles contradiction penalties.",
+    icon: BookCheck,
+    features: ["0–100 score bands", "Safe Mode triggers", "Contradiction penalty"],
   },
   {
     number: "05",
-    title: "Credibility Report",
-    description: "Get a detailed report with verdicts, confidence scores, sources, and creator ratings.",
+    title: "Explainer",
+    description:
+      "Writes a bilingual summary (EN/HI) with citations, timestamped quotes, and context-check notes (e.g., Old Footage).",
     icon: MessageSquare,
-    features: ["Truth/Misleading/Unverifiable", "0-100 Confidence Score", "Cited sources"]
-  }
+    features: ["Citations w/ timestamps", "Context Check alerts", "Plain-language copy"],
+  },
+  {
+    number: "06",
+    title: "Publisher",
+    description:
+      "Pushes results to the web app, dashboard, Chrome extension, and share-card generator with Safe Mode banners when needed.",
+    icon: Share2,
+    features: ["Square / landscape / portrait cards", "QR + short links", "WCAG compliant"],
+  },
+  {
+    number: "07",
+    title: "Feedback & Memory",
+    description:
+      "Captures user ratings, newsroom overrides, and rumor resolutions to re-rank sources and improve future verdicts.",
+    icon: Workflow,
+    features: ["Helpful/not helpful signals", "Newsroom overrides", "Memory weighting"],
+  },
 ];
 
 export function RedesignedHowItWorks() {
@@ -64,7 +87,7 @@ export function RedesignedHowItWorks() {
             How It Works
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold mb-4 font-[family-name:var(--font-space-grotesk)]">
-            Our 5-step process ensures comprehensive fact-checking
+            Agentic workflow that shows its work
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             From detection to delivery, TinLens uses advanced AI to verify claims and provide clear, actionable insights.

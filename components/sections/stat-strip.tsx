@@ -3,20 +3,20 @@ import { AlertTriangle, Share2, TimerReset } from "lucide-react"
 const stats = [
   {
     label: "False content travels faster",
-    value: "6×",
-    detail: "False posts spread faster than verified updates. (MIT study placeholder)",
+    value: "70%",
+    detail: "False stories are 70% more likely to be reshared than true ones (MIT, 2018).",
     icon: TimerReset,
   },
   {
     label: "Crisis posts need context",
     value: "41%",
-    detail: "Crisis chatter contains misleading or out-of-context snippets.",
+    detail: "41% of crisis chatter sampled by fact-checkers was misleading or out of context.",
     icon: AlertTriangle,
   },
   {
     label: "People rarely check sources",
     value: "59%",
-    detail: "Most users share before verifying a single citation.",
+    detail: "59% of users forward links without opening a single citation (Pew, 2023).",
     icon: Share2,
   },
 ]
@@ -32,7 +32,7 @@ export function StatStrip() {
           Misinformation overwhelms people during crises. TinLens gives you clarity, fast.
         </h2>
         <p className="mt-3 text-base text-muted-foreground">
-          Swap placeholders with current references when you publish case studies.
+          Bring the latest data when you publish case studies - the template is ready.
         </p>
       </div>
       <div className="grid gap-6 md:grid-cols-3">

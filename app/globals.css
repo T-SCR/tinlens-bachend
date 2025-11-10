@@ -253,3 +253,96 @@
 .custom-gradient-border {
   border-image: var(--tinlens-gradient) 1;
 }
+
+.database-grid {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: stretch;
+}
+
+.database-visual {
+  min-height: 420px;
+  color: #fff;
+  border-radius: 28px;
+  position: relative;
+}
+
+.database-core {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.database-orbit {
+  position: relative;
+  margin: 0 auto;
+  margin-top: 2rem;
+  width: 280px;
+  height: 280px;
+}
+
+.database-node {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.database-node-inner {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+}
+
+.database-node--client {
+  --angle: calc(var(--node-index) * 120deg);
+  transform: rotate(var(--angle));
+}
+
+.database-node--client p,
+.database-node--api p {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.database-node--api {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.database-connections {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.database-connection {
+  position: absolute;
+  width: 2px;
+  height: 60%;
+  left: 50%;
+  top: 20%;
+  background: linear-gradient(180deg, rgba(46, 143, 255, 0.6), transparent);
+  transform-origin: center bottom;
+  border-radius: 999px;
+}
+
+.database-connection:nth-child(1) { transform: rotate(0deg); }
+.database-connection:nth-child(2) { transform: rotate(60deg); }
+.database-connection:nth-child(3) { transform: rotate(120deg); }
+.database-connection:nth-child(4) { transform: rotate(180deg); }
+.database-connection:nth-child(5) { transform: rotate(240deg); }
+.database-connection:nth-child(6) { transform: rotate(300deg); }

@@ -1,44 +1,44 @@
 'use client';
+
 import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useConvexAuth } from 'convex/react';
+
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { MenuToggleIcon } from '@/components/ui/menu-toggle-icon';
 import { useScroll } from '@/components/ui/use-scroll';
-import Link from 'next/link';
-import Image from 'next/image';
 import { CreditsDisplay } from '@/components/credits-display';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+const primaryLinks = [
+	{ label: 'Verify', href: '/verify' },
+	{ label: 'Trends', href: '/trends' },
+	{ label: 'How it Works', href: '/#how-it-works' },
+	{ label: 'Credits', href: '/credits' },
+];
+
+const moreLinks = [
+	{ label: 'For Teams', href: '/#use-cases' },
+	{ label: 'Docs', href: '/#docs' },
+	{ label: 'Contact', href: '/#contact' },
+];
 
 export function Header() {
 	const [open, setOpen] = React.useState(false);
 	const scrolled = useScroll(10);
 	const [mounted, setMounted] = React.useState(false);
+	const { isAuthenticated } = useConvexAuth();
 
 	React.useEffect(() => {
 		setMounted(true);
 	}, []);
-
-	const links = [
-		{
-			label: 'Verify',
-			href: '/',
-		},
-		{
-			label: 'Trends',
-			href: '/news',
-		},
-		{
-			label: 'How it Works',
-			href: '/#how-it-works',
-		},
-		{
-			label: 'Analyses',
-			href: '/analyses',
-		},
-		{
-			label: 'Credits',
-			href: '/credits',
-		},
-	];
 
 	React.useEffect(() => {
 		if (open) {
@@ -74,37 +74,59 @@ export function Header() {
 				<Link href="/" className="flex items-center gap-2">
 					{mounted && (
 						<>
-							<Image 
-								src="/Untitled (200 x 50 mm) (5).png" 
-								alt="TinLens" 
-								width={160} 
-								height={40} 
-								className="h-10 w-auto dark:hidden" 
+							<Image
+								src="/Untitled (200 x 50 mm) (5).png"
+								alt="TinLens"
+								width={160}
+								height={40}
+								className="h-10 w-auto dark:hidden"
 							/>
-							<Image 
-								src="/Untitled (200 x 50 mm) (4).png" 
-								alt="TinLens" 
-								width={160} 
-								height={40} 
-								className="h-10 w-auto hidden dark:block" 
+							<Image
+								src="/Untitled (200 x 50 mm) (4).png"
+								alt="TinLens"
+								width={160}
+								height={40}
+								className="hidden h-10 w-auto dark:block"
 							/>
 						</>
 					)}
 				</Link>
+
 				<div className="hidden items-center gap-2 md:flex">
-					{links.map((link, i) => (
-						<Link key={i} className={buttonVariants({ variant: 'ghost' })} href={link.href}>
+					{primaryLinks.map((link) => (
+						<Link key={link.label} className={buttonVariants({ variant: 'ghost' })} href={link.href}>
 							{link.label}
 						</Link>
 					))}
+					<DropdownMenu>
+						<DropdownMenuTrigger className={buttonVariants({ variant: 'ghost' })}>
+							More
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							{moreLinks.map((item) => (
+								<DropdownMenuItem key={item.label} asChild>
+									<Link href={item.href}>{item.label}</Link>
+								</DropdownMenuItem>
+							))}
+						</DropdownMenuContent>
+					</DropdownMenu>
 					<CreditsDisplay />
-					<Link href="/sign-in">
-						<Button variant="outline">Sign In</Button>
-					</Link>
-					<Link href="/sign-up">
-						<Button>Get Started</Button>
-					</Link>
+					{isAuthenticated ? (
+						<Link href="/dashboard">
+							<Button>Dashboard</Button>
+						</Link>
+					) : (
+						<>
+							<Link href="/sign-in">
+								<Button variant="outline">Sign In</Button>
+							</Link>
+							<Link href="/sign-up">
+								<Button>Get Started</Button>
+							</Link>
+						</>
+					)}
 				</div>
+
 				<Button size="icon" variant="outline" onClick={() => setOpen(!open)} className="md:hidden">
 					<MenuToggleIcon open={open} className="size-5" duration={300} />
 				</Button>
@@ -124,7 +146,7 @@ export function Header() {
 					)}
 				>
 					<div className="grid gap-y-2">
-						{links.map((link) => (
+						{primaryLinks.map((link) => (
 							<Link
 								key={link.label}
 								className={buttonVariants({
@@ -136,17 +158,35 @@ export function Header() {
 								{link.label}
 							</Link>
 						))}
+						<div className="rounded-xl border border-dashed border-primary/30 p-3">
+							<p className="text-sm font-semibold text-muted-foreground">More</p>
+							<div className="mt-2 flex flex-col gap-1">
+								{moreLinks.map((item) => (
+									<Link key={item.label} href={item.href} className="text-sm text-primary">
+										{item.label}
+									</Link>
+								))}
+							</div>
+						</div>
 						<CreditsDisplay className="w-full justify-center border border-dashed px-3 py-1.5" />
 					</div>
 					<div className="flex flex-col gap-2">
-						<Link href="/sign-in" className="w-full">
-							<Button variant="outline" className="w-full">
-								Sign In
-							</Button>
-						</Link>
-						<Link href="/sign-up" className="w-full">
-							<Button className="w-full">Get Started</Button>
-						</Link>
+						{isAuthenticated ? (
+							<Link href="/dashboard" className="w-full">
+								<Button className="w-full">Dashboard</Button>
+							</Link>
+						) : (
+							<>
+								<Link href="/sign-in" className="w-full">
+									<Button variant="outline" className="w-full">
+										Sign In
+									</Button>
+								</Link>
+								<Link href="/sign-up" className="w-full">
+									<Button className="w-full">Get Started</Button>
+								</Link>
+							</>
+						)}
 					</div>
 				</div>
 			</div>

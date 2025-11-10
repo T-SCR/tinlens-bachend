@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { LoaderIcon, Megaphone, ShieldCheck } from "lucide-react";
+import { useConvexAuth } from "convex/react";
+import { toast } from "sonner";
+
+import { useLanguage } from "@/components/language-provider";
+import { Vortex } from "@/components/ui/vortex";
+import { TextRotate } from "@/components/ui/text-rotate";
 import { ShinyButton } from "@/components/ui/shiny-button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { PlayIcon, LoaderIcon, Megaphone } from "lucide-react";
-import { useConvexAuth } from "convex/react";
-import { toast } from "sonner";
-import Link from "next/link";
-import { TextRotate } from "@/components/ui/text-rotate";
-import { Vortex } from "@/components/ui/vortex";
-import { useLanguage } from "@/components/language-provider";
 
 export function EnhancedHero() {
   const [url, setUrl] = useState("");
@@ -22,7 +23,7 @@ export function EnhancedHero() {
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!url.trim()) {
       toast.error(t.enterUrl || "Please enter a URL");
       return;
@@ -39,98 +40,106 @@ export function EnhancedHero() {
   };
 
   return (
-    <section className="relative w-full min-h-screen overflow-hidden">
+    <section className="relative min-h-screen w-full overflow-hidden">
       <Vortex
         backgroundColor="transparent"
         rangeY={800}
         particleCount={500}
         baseHue={220}
-        className="flex items-center justify-center px-4 py-24 w-full h-full"
+        className="flex h-full w-full items-center justify-center px-4 py-24"
       >
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <Badge variant="secondary" className="mb-4">
-            AI-Powered Fact Checking
-          </Badge>
-          
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary">
-            <Megaphone className="h-4 w-4" />
-            <span>Launch promo: all new signups unlock TinLens Pro (unlimited) for free.</span>
+        <div className="relative z-10 mx-auto max-w-4xl text-center">
+          <div className="mb-6 inline-flex flex-col sm:flex-row items-center gap-3 rounded-full border border-white/20 bg-gradient-to-r from-white/10 to-white/5 px-6 py-3 text-sm font-medium text-white shadow-[0_10px_40px_-20px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+            <span className="rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.25em] text-white">
+              Know before you share
+            </span>
+            <div className="flex items-center gap-2 text-white/90">
+              <Megaphone className="h-4 w-4 text-primary animate-pulse" />
+              <span className="font-medium">Landing is public. Dashboard unlocks advanced features after sign-in.</span>
+            </div>
           </div>
 
-          <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl flex flex-wrap items-center justify-center gap-4">
-            <span>Detect</span>
+          <h1 className="mb-6 flex flex-wrap items-center justify-center gap-3 text-4xl font-bold tracking-tight sm:text-6xl md:text-7xl">
+            <span>Verify</span>
             <TextRotate
-              texts={["Misinformation", "Fake News", "Deepfakes", "Propaganda"]}
+              texts={["claims", "links", "shorts", "forwarded posts", "videos"]}
               mainClassName="text-primary inline-flex"
               rotationInterval={2500}
               staggerDuration={0.025}
               staggerFrom="last"
             />
-            <span>with AI</span>
+            <span>in seconds</span>
           </h1>
 
           <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl">
-            {t.heroSubtitle || "Detect and verify misinformation with AI. Paste text, Instagram Reels, YouTube videos, or article links to get instant fact-checking with confidence scores and citations."}
+            Agentic AI turns messy posts into atomic claims, checks trusted sources, and
+            returns a verdict (True/False/Misleading/Unverifiable) with a 0–100 confidence
+            score, tags, citations, and a myth-vs-fact card.
           </p>
 
           <form onSubmit={handleAnalyze} className="mx-auto max-w-2xl space-y-4">
-            <div className="flex gap-3 items-center justify-center">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
               <Input
-                placeholder={t.urlPlaceholder || "Enter a URL (e.g., https://www.instagram.com/reel/...)"}
-                className="flex-1 h-12 text-base min-w-0"
+                placeholder={
+                  t.urlPlaceholder ||
+                  "Paste a URL or caption (Instagram Reels, YouTube, WhatsApp text…)"
+                }
+                className="h-12 flex-1 min-w-0 text-base"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 disabled={isLoading}
               />
               <ShinyButton
-                onClick={() => {
-                  const fakeEvent = new Event('submit') as unknown as React.FormEvent;
-                  handleAnalyze(fakeEvent);
-                }}
-                className="px-6 h-12 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                type="submit"
+                disabled={isLoading}
+                className="h-12 shrink-0 px-6 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
-                    <LoaderIcon className="h-4 w-4 mr-2 animate-spin inline-block" />
+                    <LoaderIcon className="mr-2 inline-block h-4 w-4 animate-spin" />
                     {t.analyzing || "Analyzing"}
                   </>
                 ) : (
                   <>
-                    <PlayIcon className="h-4 w-4 mr-2 inline-block" />
-                    {t.analyzeButton || "Verify Content"}
+                    <ShieldCheck className="mr-2 inline-block h-4 w-4" />
+                    {t.analyzeButton || "Verify a claim"}
                   </>
                 )}
               </ShinyButton>
             </div>
 
-            <p className="text-sm text-muted-foreground text-center">
-              Use any live Instagram Reel, YouTube video, or public article link. TinLens runs the full verification—no demo or synthetic responses.
+            <p className="text-center text-sm text-muted-foreground">
+              TinLens ingests Instagram Reels, YouTube videos, and raw text. Safe Mode takes
+              over automatically when confidence drops below 50.
             </p>
 
             {!isAuthenticated && (
-              <p className="text-sm text-center">
-                <Link href="/sign-in" className="text-primary hover:underline font-medium">
+              <p className="text-center text-sm">
+                <Link href="/sign-in" className="font-medium text-primary hover:underline">
                   Sign in
                 </Link>
                 {" or "}
-                <Link href="/sign-up" className="text-primary hover:underline font-medium">
+                <Link href="/sign-up" className="font-medium text-primary hover:underline">
                   create an account
-                </Link>
-                {" "}to start verifying content
+                </Link>{" "}
+                to open the dashboard
               </p>
             )}
           </form>
 
           <div className="mt-12 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-background/50">Instagram</Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-background/50">YouTube</Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="bg-background/50">Web Articles</Badge>
-            </div>
+            <Badge variant="outline" className="bg-background/70">
+              Instagram Reels
+            </Badge>
+            <Badge variant="outline" className="bg-background/70">
+              YouTube
+            </Badge>
+            <Badge variant="outline" className="bg-background/70">
+              Web articles
+            </Badge>
+            <Badge variant="outline" className="bg-background/70">
+              Plain text / WhatsApp
+            </Badge>
           </div>
         </div>
       </Vortex>

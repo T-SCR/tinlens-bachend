@@ -1,88 +1,122 @@
-import { type SVGProps } from "react";
+import type { ComponentType } from "react";
 
-// Trusted fact-checking and news source logos
+type LogoComponent = ComponentType<{ className?: string }>;
 
-export function BBCIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <rect width="100" height="100" fill="#000" />
-      <text x="50" y="60" fontSize="36" fontWeight="bold" fill="#fff" textAnchor="middle">BBC</text>
-    </svg>
+const createSvg = (name: string, svg: string): LogoComponent => {
+  const Component: LogoComponent = ({ className }) => (
+    <span
+      className={className}
+      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+      dangerouslySetInnerHTML={{ __html: svg }}
+      role="img"
+      aria-label={name}
+    />
   );
-}
+  Component.displayName = `${name}Logo`;
+  return Component;
+};
 
-export function ReutersIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <rect width="100" height="100" fill="#FF8000" />
-      <text x="50" y="45" fontSize="18" fontWeight="bold" fill="#fff" textAnchor="middle">REUTERS</text>
-    </svg>
-  );
-}
+const BBCIcon = createSvg(
+  "BBC",
+  `
+  <svg viewBox="0 0 180 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="180" height="60" fill="#000"/>
+    <text x="90" y="40" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="32" fill="#fff" text-anchor="middle">BBC</text>
+  </svg>
+`
+);
 
-export function APNewsIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <rect width="100" height="100" fill="#E41E20" />
-      <text x="50" y="60" fontSize="32" fontWeight="bold" fill="#fff" textAnchor="middle">AP</text>
-    </svg>
-  );
-}
+const ReutersIcon = createSvg(
+  "Reuters",
+  `
+  <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="60" fill="#fff"/>
+    <g fill="#f37021" transform="translate(30,10)">
+      ${Array.from({ length: 20 })
+        .map((_, idx) => {
+          const angle = (idx / 20) * Math.PI * 2;
+          const radius = 18 + (idx % 2 === 0 ? 2 : 0);
+          const cx = 45 + Math.cos(angle) * radius;
+          const cy = 20 + Math.sin(angle) * radius;
+          return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3" />`;
+        })
+        .join("")}
+    </g>
+    <text x="150" y="38" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="28" fill="#f37021" text-anchor="middle">REUTERS</text>
+  </svg>
+`
+);
 
-export function FactCheckIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <circle cx="50" cy="50" r="45" fill="#4CAF50" />
-      <path d="M30 50 L45 65 L70 35" stroke="#fff" strokeWidth="6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+const APIcon = createSvg(
+  "Associated Press",
+  `
+  <svg viewBox="0 0 180 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="180" height="60" fill="#fff"/>
+    <text x="70" y="40" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="36" fill="#111" text-anchor="middle">AP</text>
+    <rect x="95" y="42" width="50" height="8" fill="#e21c2a" rx="4"/>
+  </svg>
+`
+);
 
-export function WHOIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <circle cx="50" cy="50" r="45" fill="#0093D5" />
-      <text x="50" y="60" fontSize="26" fontWeight="bold" fill="#fff" textAnchor="middle">WHO</text>
-    </svg>
-  );
-}
+const PolitiFactIcon = createSvg(
+  "PolitiFact",
+  `
+  <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="60" fill="#004a99"/>
+    <text x="100" y="38" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="32" fill="#fff" text-anchor="middle">PolitiFact</text>
+    <circle cx="162" cy="18" r="8" fill="#f7b500"/>
+  </svg>
+`
+);
 
-export function SNopesIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <rect width="100" height="100" fill="#2C5F2D" />
-      <text x="50" y="55" fontSize="22" fontWeight="bold" fill="#fff" textAnchor="middle">Snopes</text>
-    </svg>
-  );
-}
+const SnopesIcon = createSvg(
+  "Snopes",
+  `
+  <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="60" fill="#ffd400"/>
+    <text x="100" y="38" font-family="Georgia, serif" font-weight="700" font-size="32" fill="#222" text-anchor="middle">Snopes</text>
+    <path d="M35 18 l15 -12 6 8 -18 10z" fill="#222"/>
+  </svg>
+`
+);
 
-export function GuardianIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <rect width="100" height="100" fill="#052962" />
-      <text x="50" y="45" fontSize="16" fontWeight="bold" fill="#fff" textAnchor="middle">The</text>
-      <text x="50" y="65" fontSize="18" fontWeight="bold" fill="#fff" textAnchor="middle">Guardian</text>
-    </svg>
-  );
-}
+const GuardianIcon = createSvg(
+  "The Guardian",
+  `
+  <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="60" fill="#052962"/>
+    <text x="100" y="36" font-family="'Times New Roman', serif" font-weight="700" font-size="30" fill="#fff" text-anchor="middle">The Guardian</text>
+  </svg>
+`
+);
 
-export function PolitiFactIcon(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" {...props}>
-      <rect width="100" height="100" fill="#0055A4" />
-      <text x="50" y="45" fontSize="18" fontWeight="bold" fill="#fff" textAnchor="middle">Politi</text>
-      <text x="50" y="65" fontSize="18" fontWeight="bold" fill="#fff" textAnchor="middle">Fact</text>
-    </svg>
-  );
-}
+const AFPIcon = createSvg(
+  "AFP",
+  `
+  <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="60" fill="#0082c6"/>
+    <text x="100" y="38" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="34" fill="#fff" text-anchor="middle">AFP</text>
+  </svg>
+`
+);
+
+const FactCheckIcon = createSvg(
+  "FactCheck.org",
+  `
+  <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+    <rect width="200" height="60" fill="#0f172a"/>
+    <text x="100" y="38" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="30" fill="#4ade80" text-anchor="middle">FactCheck.org</text>
+  </svg>
+`
+);
 
 export const trustedSourceLogos = [
   { name: "BBC", id: 1, img: BBCIcon },
   { name: "Reuters", id: 2, img: ReutersIcon },
-  { name: "AP News", id: 3, img: APNewsIcon },
-  { name: "FactCheck.org", id: 4, img: FactCheckIcon },
-  { name: "WHO", id: 5, img: WHOIcon },
-  { name: "Snopes", id: 6, img: SNopesIcon },
+  { name: "Associated Press", id: 3, img: APIcon },
+  { name: "AFP", id: 4, img: AFPIcon },
+  { name: "PolitiFact", id: 5, img: PolitiFactIcon },
+  { name: "Snopes", id: 6, img: SnopesIcon },
   { name: "The Guardian", id: 7, img: GuardianIcon },
-  { name: "PolitiFact", id: 8, img: PolitiFactIcon },
+  { name: "FactCheck.org", id: 8, img: FactCheckIcon },
 ];

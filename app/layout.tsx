@@ -6,6 +6,7 @@ import UserSync from "@/components/user-sync";
 import { Toaster } from "sonner";
 import { Header } from "@/components/ui/header-2";
 import Providers from "@/components/Providers";
+import { Footer } from "@/components/footer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -46,6 +47,7 @@ export default function RootLayout({
           <UserSync />
           <Header />
           {children}
+          <Footer />
           <Toaster richColors />
         </Providers>
       </body>

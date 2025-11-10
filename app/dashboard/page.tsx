@@ -1,222 +1,206 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GradientHeading } from "@/components/ui/gradient-heading";
-import { ShieldCheck, TrendingUp, CreditCard, CheckCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useMemo } from "react";
+import { useQuery } from "convex/react";
+import {
+  ArrowRight,
+  BarChart2,
+  CheckCircle2,
+  FileText,
+  ShieldCheck,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
+
+import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DatabaseWithRestAPI } from "@/components/ui/database-with-rest-api";
 
 export default function DashboardPage() {
   const user = useQuery(api.users.getCurrentUser);
   const savedAnalyses = useQuery(api.tiktokAnalyses.getUserTikTokAnalyses);
 
   const isLoading = user === undefined || savedAnalyses === undefined;
-
-  // Calculate stats
-  const totalAnalyses = savedAnalyses?.length || 0;
-  const creditsRemaining = user?.credits || 0;
+  const totalAnalyses = savedAnalyses?.length ?? 0;
   const isUnlimited = user?.plan === "pro" || user?.credits === -1;
+  const creditsRemaining = isUnlimited ? -1 : (user?.credits ?? 0);
+  const planLabel = user?.plan ? user.plan.charAt(0).toUpperCase() + user.plan.slice(1) : "Free";
+
+  const quickActions = useMemo(
+    () => [
+      {
+        title: "Verify a claim",
+        description: "Paste any URL, caption, or Reel to run the full agentic pipeline.",
+        href: "/verify",
+        icon: ShieldCheck,
+      },
+      {
+        title: "View live trends",
+        description: "See clusters rising fastest, risk bands, and flagged geographies.",
+        href: "/trends",
+        icon: TrendingUp,
+      },
+      {
+        title: "Saved analyses",
+        description: `${totalAnalyses} saved verdict${totalAnalyses === 1 ? "" : "s"} ready to review.`,
+        href: "/analyses",
+        icon: FileText,
+      },
+    ],
+    [totalAnalyses]
+  );
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      {/* Welcome Section */}
-      <div className="mb-12">
-        <GradientHeading size="xl" className="mb-2">
-          Welcome back{user?.firstName ? `, ${user.firstName}` : ""}!
-        </GradientHeading>
-        <p className="text-muted-foreground">
-          Here&apos;s your verification dashboard
-        </p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        {/* Total Analyses */}
-        <Card className="border-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Analyses
-            </CardTitle>
-            <ShieldCheck className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-16" />
-            ) : (
-              <div className="text-3xl font-bold">{totalAnalyses}</div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Credits Remaining */}
-        <Card className="border-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Credits
-            </CardTitle>
-            <CreditCard className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <div className="text-3xl font-bold">
-                {isUnlimited ? "Unlimited" : creditsRemaining}
-              </div>
-            )}
-            {!isUnlimited && (
-              <Link href="/credits">
-                <Button variant="link" className="px-0 h-auto mt-2">
-                  Add more →
-                </Button>
-              </Link>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Plan */}
-        <Card className="border-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Current Plan
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-primary" />
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <div className="text-2xl font-bold capitalize">{user?.plan || "Free"}</div>
-            )}
-            {user?.plan === "free" && (
-              <Link href="/credits">
-                <Button variant="link" className="px-0 h-auto mt-2">
-                  Upgrade →
-                </Button>
-              </Link>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Verified Claims */}
-        <Card className="border-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Status
-            </CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Active</div>
-            <p className="text-xs text-muted-foreground mt-2">All systems operational</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid md:grid-cols-2 gap-6 mb-12">
-        <Card className="border-2 hover:shadow-lg transition-all">
-          <CardHeader>
-            <CardTitle>Quick Verify</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Paste a link to verify content instantly
-            </p>
-            <Link href="/verify">
-              <Button className="w-full">
-                Start Verification <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 hover:shadow-lg transition-all">
-          <CardHeader>
-            <CardTitle>Trending Topics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              See what&apos;s being fact-checked right now
-            </p>
-            <Link href="/trends">
-              <Button variant="outline" className="w-full">
-                View Trends <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Analyses */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Recent Analyses</h2>
-          <Link href="/analyses">
-            <Button variant="ghost">View All →</Button>
-          </Link>
+    <div className="space-y-10 px-4 py-12 lg:px-8">
+      <div className="rounded-[40px] border border-white/10 bg-[radial-gradient(circle_at_top,_#101828,_#050607)] p-8 text-white shadow-2xl">
+        <div className="flex flex-col gap-3">
+          <Badge variant="secondary" className="w-fit border-white/20 bg-white/10 text-white">
+            Personal dashboard
+          </Badge>
+          <h1 className="text-3xl font-semibold tracking-tight">Hi {user?.firstName ?? "there"},</h1>
+          <p className="text-sm text-white/70">
+            Run verifications, track misinformation trends, and export evidence from one console. Landing stays public,
+            but everything here is yours.
+          </p>
         </div>
 
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24 w-full" />
-            ))}
-          </div>
-        ) : savedAnalyses && savedAnalyses.length > 0 ? (
-          <div className="space-y-4">
-            {savedAnalyses.slice(0, 5).map((analysis) => (
-              <Card key={analysis._id} className="hover:shadow-md transition-all">
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-2">
-                        {analysis.metadata?.title || "Untitled Analysis"}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {analysis.metadata?.platform || "web"}
-                        </Badge>
-                        {analysis.factCheck && (
-                          <Badge
-                            variant={
-                              analysis.factCheck.verdict === "true"
-                                ? "default"
-                                : "destructive"
-                            }
-                            className="text-xs"
-                          >
-                            {analysis.factCheck.verdict}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <Link href={`/analyses#${analysis._id}`}>
-                      <Button variant="ghost" size="sm">
-                        View <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="border-dashed">
-            <CardContent className="pt-12 pb-12 text-center">
-              <p className="text-muted-foreground mb-4">
-                No analyses yet. Start verifying content!
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="mb-6 flex items-center justify-between text-white/70">
+              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em]">
+                <Zap className="h-4 w-4 text-amber-300" />
+                Your balance
+              </div>
+              <span className="text-xs font-medium">{planLabel} plan</span>
+            </div>
+            {isLoading ? (
+              <Skeleton className="h-12 w-32 bg-white/20" />
+            ) : (
+              <p className="text-5xl font-semibold">
+                {isUnlimited || creditsRemaining === -1 ? "Unlimited" : creditsRemaining}
+                {!isUnlimited && creditsRemaining !== -1 && <span className="ml-2 text-base font-normal uppercase text-white/60">credits</span>}
               </p>
-              <Link href="/verify">
-                <Button>Verify Your First Content</Button>
+            )}
+            <p className="mt-1 text-sm uppercase tracking-[0.4em] text-white/50">Available credits</p>
+            <div className="mt-6 rounded-2xl border border-dashed border-white/30 bg-white/5 p-4 text-sm text-white/80">
+              TinLens deducts one credit per verification. Trends, dashboards, and alerts are bundled with every paid
+              plan. Credits never expire.
+            </div>
+            {!isUnlimited && !isLoading && (
+              <Button asChild size="sm" className="mt-6 bg-white text-slate-900 hover:bg-white/90">
+                <Link href="/credits">
+                  Top up credits <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+            <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-white/70">
+              <BarChart2 className="h-4 w-4 text-sky-300" />
+              Why credits?
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-white/80">
+              Each credit covers ingestion, Whisper transcription, semantic retrieval, veracity scoring, bilingual
+              explanations, and share-card rendering. Enterprise teams can request invoices, on-prem enclaves, or auto
+              top-ups.
+            </p>
+            <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4 text-sm text-white/80">
+              Need unlimited seats or newsroom bundles? Email{" "}
+              <Link href="mailto:hello@tinlens.ai" className="underline">
+                hello@tinlens.ai
+              </Link>{" "}
+              for TinLens Pro.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        {quickActions.map((action) => (
+          <div
+            key={action.title}
+            className="group rounded-3xl border border-border/50 bg-card/80 p-6 shadow-lg transition hover:-translate-y-1 hover:border-primary/40"
+          >
+            <action.icon className="mb-4 h-8 w-8 text-primary" />
+            <h3 className="text-lg font-semibold">{action.title}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{action.description}</p>
+            <Button asChild variant="link" className="px-0 text-primary group-hover:text-primary/80">
+              <Link href={action.href}>
+                Go now <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
-            </CardContent>
-          </Card>
-        )}
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-[32px] border border-border bg-card/70 p-6 shadow-xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-semibold">Recent analyses</h3>
+            <p className="text-sm text-muted-foreground">
+              Your last {Math.min(totalAnalyses, 5)} saved verdicts with verdict tags and platform context.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/analyses">
+              View all
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="mt-6 space-y-4">
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, idx) => <Skeleton key={idx} className="h-16 w-full" />)
+          ) : savedAnalyses && savedAnalyses.length > 0 ? (
+            savedAnalyses.slice(0, 5).map((analysis) => (
+              <div
+                key={analysis._id}
+                className="rounded-2xl border border-border/60 bg-background/40 p-4 transition hover:border-primary/50"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {analysis.metadata?.title || "Untitled analysis"}{" "}
+                      <span className="text-xs text-muted-foreground">
+                        · {analysis.metadata?.platform?.toUpperCase() ?? "WEB"}
+                      </span>
+                    </p>
+                    {analysis.factCheck && (
+                      <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                        Verdict: {analysis.factCheck.verdict}
+                      </p>
+                    )}
+                  </div>
+                  <Link href={`/analyses#${analysis._id}`} className="text-sm text-primary hover:underline">
+                    Open case →
+                  </Link>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-2xl border border-dashed border-border/60 bg-background/40 p-6 text-center text-sm text-muted-foreground">
+              No analyses yet. Run your first verification to populate this list.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-[40px] border border-border/80 bg-card/80 p-6 shadow-lg">
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className="h-5 w-5 text-green-500" />
+          <div>
+            <p className="text-sm font-semibold">System status</p>
+            <p className="text-xs text-muted-foreground">All pipelines healthy. Safe Mode auto-review active.</p>
+          </div>
+        </div>
+        <div className="mt-6">
+          <DatabaseWithRestAPI />
+        </div>
       </div>
     </div>
   );

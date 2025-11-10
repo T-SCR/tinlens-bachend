@@ -36,10 +36,15 @@ export function CreditsDisplay({ className }: CreditsDisplayProps) {
     );
   }
 
-  const label = creditsData.hasUnlimitedCredits
-    ? "Unlimited"
-    : `${creditsData.credits} credits`;
-  const planLabel = creditsData.plan
+  const hasUnlimited =
+    creditsData.hasUnlimitedCredits ||
+    creditsData.credits === -1 ||
+    creditsData.plan === "pro";
+
+  const label = hasUnlimited ? "Unlimited" : `${creditsData.credits ?? 0} credits`;
+  const planLabel = hasUnlimited
+    ? "Pro"
+    : creditsData.plan
     ? creditsData.plan.charAt(0).toUpperCase() + creditsData.plan.slice(1)
     : "Free";
 

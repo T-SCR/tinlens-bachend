@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 interface ReplyProps {
   authorName: string
   authorHandle: string
-  authorImage: string
+  authorImage?: string
   content: string
   isVerified?: boolean
   timestamp: string
@@ -19,12 +19,17 @@ interface XCardProps {
   link?: string
   authorName: string
   authorHandle: string
-  authorImage: string
+  authorImage?: string
   content: string[]
   isVerified?: boolean
   timestamp: string
   reply?: ReplyProps
 }
+
+const DEFAULT_AUTHOR_IMAGE =
+  "https://images.unsplash.com/photo-1502685104226-ee32379fefbe?auto=format&fit=crop&w=200&q=80"
+const DEFAULT_REPLY_IMAGE =
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80"
 
 function Avatar({ src, alt }: { src: string; alt: string }) {
   return (
@@ -43,12 +48,19 @@ export function XCard({
   link = "https://x.com/tinlens/status/demo",
   authorName,
   authorHandle,
-  authorImage,
+  authorImage = DEFAULT_AUTHOR_IMAGE,
   content,
   isVerified = true,
   timestamp,
   reply,
 }: XCardProps) {
+  const replyData = reply
+    ? {
+        ...reply,
+        authorImage: reply.authorImage || DEFAULT_REPLY_IMAGE,
+      }
+    : undefined
+
   return (
     <Link
       href={link}
@@ -74,7 +86,7 @@ export function XCard({
                   <VerifiedIcon className="h-4 w-4 text-sky-400 dark:text-sky-300" />
                 )}
                 <span className="text-muted-foreground">@{authorHandle}</span>
-                <span className="text-muted-foreground">·</span>
+                <span className="text-muted-foreground">•</span>
                 <span className="text-muted-foreground">{timestamp}</span>
               </div>
               <div className="mt-2 space-y-2 text-sm text-foreground/90 dark:text-white/90">
@@ -104,25 +116,25 @@ export function XCard({
             </button>
           </div>
 
-          {reply && (
+          {replyData && (
             <div className="mt-4 space-y-3 rounded-xl border border-white/30 bg-white/30 p-3 text-sm shadow-inner dark:border-white/10 dark:bg-white/5">
               <div className="flex items-center gap-3">
-                <Avatar src={reply.authorImage} alt={reply.authorName} />
+                <Avatar src={replyData.authorImage} alt={replyData.authorName} />
                 <div>
                   <div className="flex items-center gap-1">
-                    <span className="font-semibold">{reply.authorName}</span>
-                    {reply.isVerified && (
+                    <span className="font-semibold">{replyData.authorName}</span>
+                    {replyData.isVerified && (
                       <VerifiedIcon className="h-4 w-4 text-sky-400 dark:text-sky-300" />
                     )}
                     <span className="text-muted-foreground">
-                      @{reply.authorHandle}
+                      @{replyData.authorHandle}
                     </span>
-                    <span className="text-muted-foreground">·</span>
+                    <span className="text-muted-foreground">•</span>
                     <span className="text-muted-foreground">
-                      {reply.timestamp}
+                      {replyData.timestamp}
                     </span>
                   </div>
-                  <p className="text-muted-foreground">{reply.content}</p>
+                  <p className="text-muted-foreground">{replyData.content}</p>
                 </div>
               </div>
             </div>

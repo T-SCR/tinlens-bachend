@@ -1,47 +1,76 @@
-"use client";
+'use client';
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { ArrowRight, Chrome, Download, Mail, Shield, TrendingUp } from "lucide-react";
 
 import { ShinyButton } from "@/components/ui/shiny-button";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
-import { Shield, ArrowRight, Chrome } from "lucide-react";
 
 export function FinalCTA() {
+  const router = useRouter();
+
   return (
-    <section className="py-24 relative overflow-hidden">
-      {/* Gradient Background */}
+    <section className="relative overflow-hidden py-24" id="contact">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
-      
-      <div className="container mx-auto px-4 relative z-10">
+
+      <div className="container relative z-10 mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-4xl mx-auto"
+          className="mx-auto max-w-4xl text-center"
         >
-          <h2 className="text-4xl md:text-6xl font-bold mb-6 font-[family-name:var(--font-space-grotesk)]">
-            Ready to Fight Misinformation?
+          <h2 className="font-[family-name:var(--font-space-grotesk)] text-4xl font-bold md:text-6xl">
+            Ready to fight misinformation with TinLens?
           </h2>
-          
-          <p className="text-xl text-muted-foreground mb-10">
-            Join the fight against misinformation. Start fact-checking content today with AI-powered verification.
+
+          <p className="mt-4 text-xl text-muted-foreground">
+            Verify a claim, install the Chrome extension, monitor Trends, or get mobile alerts.
+            Everything else lives inside the dashboard once you sign in.
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
-            <ShinyButton onClick={() => window.location.href = '/'} className="text-lg px-8 py-6">
-              <Shield className="w-5 h-5 mr-2 inline-block" />
-              Verify a Claim Now
+
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <ShinyButton onClick={() => router.push("/verify")} className="px-8 py-6 text-lg">
+              <Shield className="mr-2 inline-block h-5 w-5" />
+              Verify a claim
             </ShinyButton>
-            
-            <Button variant="outline" size="lg" className="text-lg px-8 py-6">
-              <Chrome className="w-5 h-5 mr-2" />
-              Install Chrome Extension
-              <ArrowRight className="w-4 h-4 ml-2" />
+            <Button variant="outline" size="lg" className="gap-2 px-8 py-6" asChild>
+              <Link href="/download">
+                <Chrome className="h-5 w-5" />
+                Install Extension
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button variant="ghost" size="lg" className="gap-2 px-6" asChild>
+              <Link href="/trends">
+                <TrendingUp className="h-5 w-5" />
+                View Trends
+              </Link>
+            </Button>
+            <Button variant="ghost" size="lg" className="gap-2 px-6" asChild>
+              <a href="https://apps.apple.com" target="_blank" rel="noreferrer">
+                <Download className="h-5 w-5" />
+                Get the app
+              </a>
             </Button>
           </div>
-          
-          <p className="text-sm text-muted-foreground mt-8">
-            No signup required to verify content · Free for personal use · Enterprise plans available
+
+          <div className="mt-10 rounded-3xl border border-dashed border-primary/40 bg-primary/5 px-6 py-5 text-sm text-muted-foreground">
+            <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+              <span className="flex items-center gap-2 font-medium text-primary">
+                <Mail className="h-4 w-4" />
+                hello@tinlens.ai
+              </span>
+              <span className="hidden text-muted-foreground sm:inline">|</span>
+              <span>Enterprise plans, language packs, and on-prem deployments available on request.</span>
+            </div>
+          </div>
+
+          <p className="mt-6 text-xs text-muted-foreground">
+            Safe Mode protects audiences when confidence &lt; 50. TinLens never shares personal data - only URLs, snippets, and telemetry to improve accuracy.
           </p>
         </motion.div>
       </div>
