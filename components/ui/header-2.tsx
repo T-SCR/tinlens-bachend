@@ -18,11 +18,18 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const primaryLinks = [
+const publicLinks = [
 	{ label: 'Verify', href: '/verify' },
 	{ label: 'Trends', href: '/trends' },
 	{ label: 'How it Works', href: '/#how-it-works' },
-	{ label: 'Credits', href: '/credits' },
+	{ label: 'Pricing', href: '/credits' },
+];
+
+const privateLinks = [
+	{ label: 'Dashboard', href: '/dashboard' },
+	{ label: 'Verify', href: '/verify' },
+	{ label: 'Trends', href: '/trends' },
+	{ label: 'Saved Analyses', href: '/analyses' },
 ];
 
 const moreLinks = [
@@ -36,6 +43,7 @@ export function Header() {
 	const scrolled = useScroll(10);
 	const [mounted, setMounted] = React.useState(false);
 	const { isAuthenticated } = useConvexAuth();
+	const primaryLinks = isAuthenticated ? privateLinks : publicLinks;
 
 	React.useEffect(() => {
 		setMounted(true);
@@ -99,33 +107,30 @@ export function Header() {
 							{link.label}
 						</Link>
 					))}
-					<DropdownMenu>
-						<DropdownMenuTrigger className={buttonVariants({ variant: 'ghost' })}>
-							More
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							{moreLinks.map((item) => (
-								<DropdownMenuItem key={item.label} asChild>
-									<Link href={item.href}>{item.label}</Link>
-								</DropdownMenuItem>
-							))}
-						</DropdownMenuContent>
-					</DropdownMenu>
-					<CreditsDisplay />
+					{!isAuthenticated && (
+						<DropdownMenu>
+							<DropdownMenuTrigger className={buttonVariants({ variant: 'ghost' })}>
+								More
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								{moreLinks.map((item) => (
+									<DropdownMenuItem key={item.label} asChild>
+										<Link href={item.href}>{item.label}</Link>
+									</DropdownMenuItem>
+								))}
+							</DropdownMenuContent>
+						</DropdownMenu>
+					)}
+					{isAuthenticated && <CreditsDisplay />}
 					{isAuthenticated ? (
-						<>
-							<Link href="/dashboard">
-								<Button>Dashboard</Button>
-							</Link>
-							<UserButton 
-								appearance={{
-									elements: {
-										avatarBox: 'h-9 w-9',
-									},
-								}}
-								afterSignOutUrl="/"
-							/>
-						</>
+						<UserButton 
+							appearance={{
+								elements: {
+									avatarBox: 'h-9 w-9',
+								},
+							}}
+							afterSignOutUrl="/"
+						/>
 					) : (
 						<>
 							<Link href="/sign-in">
@@ -169,36 +174,33 @@ export function Header() {
 								{link.label}
 							</Link>
 						))}
-						<div className="rounded-xl border border-dashed border-primary/30 p-3">
-							<p className="text-sm font-semibold text-muted-foreground">More</p>
-							<div className="mt-2 flex flex-col gap-1">
-								{moreLinks.map((item) => (
-									<Link key={item.label} href={item.href} className="text-sm text-primary">
-										{item.label}
-									</Link>
-								))}
+						{!isAuthenticated && (
+							<div className="rounded-xl border border-dashed border-primary/30 p-3">
+								<p className="text-sm font-semibold text-muted-foreground">More</p>
+								<div className="mt-2 flex flex-col gap-1">
+									{moreLinks.map((item) => (
+										<Link key={item.label} href={item.href} className="text-sm text-primary">
+											{item.label}
+										</Link>
+									))}
+								</div>
 							</div>
-						</div>
-						<CreditsDisplay className="w-full justify-center border border-dashed px-3 py-1.5" />
+						)}
+						{isAuthenticated && <CreditsDisplay className="w-full justify-center border border-dashed px-3 py-1.5" />}
 					</div>
 					<div className="flex flex-col gap-2">
 						{isAuthenticated ? (
-							<>
-								<Link href="/dashboard" className="w-full">
-									<Button className="w-full">Dashboard</Button>
-								</Link>
-								<div className="flex w-full items-center justify-center gap-2 rounded-lg border border-border/50 bg-card p-3">
-									<UserButton 
-										appearance={{
-											elements: {
-												avatarBox: 'h-10 w-10',
-											},
-										}}
-										afterSignOutUrl="/"
-									/>
-									<span className="text-sm font-medium">My Profile</span>
-								</div>
-							</>
+							<div className="flex w-full items-center justify-center gap-2 rounded-lg border border-border/50 bg-card p-3">
+								<UserButton 
+									appearance={{
+										elements: {
+											avatarBox: 'h-10 w-10',
+										},
+									}}
+									afterSignOutUrl="/"
+								/>
+								<span className="text-sm font-medium">My Profile</span>
+							</div>
 						) : (
 							<>
 								<Link href="/sign-in" className="w-full">

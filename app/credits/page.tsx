@@ -1,54 +1,101 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo } from "react";
-import { Coins, ShieldCheck, Sparkles, Megaphone } from "lucide-react";
 import { useConvexAuth, useQuery } from "convex/react";
-import { toast } from "sonner";
+import { Coins, Megaphone, ShieldCheck, Sparkles } from "lucide-react";
 
 import { api } from "@/convex/_generated/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CREDIT_PACKS } from "@/lib/plans";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+
+const plans = [
+  {
+    id: "pro",
+    name: "TinLens Pro",
+    price: "∞ credits",
+    description: "Unlimited verifications during launch. Perfect for teams that need full access.",
+    features: [
+      "Unlimited verifications & share cards",
+      "Live Trends + crisis alerts",
+      "Dashboard + Safe Mode overrides",
+      "Priority support via Signal & email",
+    ],
+    highlight: true,
+    cta: "Included (limited time)",
+  },
+  {
+    id: "newsroom",
+    name: "Newsroom Pack",
+    price: "500 credits",
+    description: "Bundle credits for small teams. Auto top-ups launch soon.",
+    features: [
+      "5 editor seats",
+      "Weekly claim digests",
+      "Webhook notifications",
+      "Custom share-card themes",
+    ],
+    cta: "Coming soon",
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise / Govt",
+    price: "Custom",
+    description: "On-prem deployments, invoices, SLAs, and regional hosting.",
+    features: [
+      "Dedicated enclave",
+      "Role-based dashboards",
+      "Offline cache for crisis response",
+      "Training + implementation support",
+    ],
+    cta: "Contact us",
+  },
+];
 
 export default function CreditsPage() {
-  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const creditsData = useQuery(
     api.credits.getUserCredits,
     isAuthenticated ? {} : undefined
   );
 
-  const currentCredits = useMemo(() => creditsData?.credits ?? 0, [creditsData]);
+  const currentCredits = useMemo(() => {
+    if (!creditsData) return undefined;
+    if (creditsData.credits === -1 || creditsData.hasUnlimitedCredits || creditsData.plan === "pro") {
+      return "∞";
+    }
+    return creditsData.credits ?? 0;
+  }, [creditsData]);
+
   const currentPlanLabel = creditsData?.plan
     ? creditsData.plan.charAt(0).toUpperCase() + creditsData.plan.slice(1)
     : "Free";
 
-  const handlePlanClick = () => {
-    toast.info("Launch special", {
-      description:
-        "Every new signup is automatically upgraded to TinLens Pro for a limited time.",
-    });
-  };
-
   return (
     <main className="mx-auto max-w-6xl px-4 py-12 md:py-16">
       <section className="mx-auto max-w-3xl text-center space-y-4">
-        <BadgeHeading />
+        <Badge className="gap-2 border border-primary/30 bg-primary/5 text-primary">
+          <Sparkles className="h-3.5 w-3.5" />
+          TinLens Credits & Plans
+        </Badge>
         <h1 className="text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl md:text-5xl">
-          Manage your TinLens credits
+          Credits unlock the full verification pipeline
         </h1>
         <p className="text-base text-muted-foreground sm:text-lg">
-          Credits power every real analysis—no demo modes, no synthetic answers.
-          During launch, every new signup is automatically upgraded to TinLens
-          Pro with unlimited verifications.
+          Every credit covers ingestion, Whisper transcription, retrieval, Veracity Judge scoring, bilingual
+          explanations, share-card rendering, and Safe Mode monitoring. During launch, every new TinLens account is
+          upgraded to Pro with unlimited credits.
         </p>
-        <div className="mx-auto flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-sm text-primary">
-          <Megaphone className="h-4 w-4" />
-          <span>Limited-time launch promo: Free Pro plan for new accounts.</span>
+        <div className="mx-auto flex max-w-xl items-center gap-2 rounded-full border border-amber-400/40 bg-amber-500/20 px-5 py-3 text-sm font-medium text-amber-900 dark:text-amber-100">
+          <Megaphone className="h-5 w-5 animate-pulse" />
+          <span><span className="font-bold">🎉 Mumbai Hacks Special:</span> TinLens Pro (∞ credits) FREE for all participants!</span>
         </div>
       </section>
 
       <section className="mt-10 grid gap-6 md:grid-cols-[1.25fr_1fr]">
-        <Card className="border-primary/40 bg-primary/5">
+        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-background">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-primary">
               <Coins className="h-5 w-5" />
@@ -57,26 +104,21 @@ export default function CreditsPage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <p className="text-sm uppercase tracking-widest text-muted-foreground">
-                Available credits
+              <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground">Available credits</p>
+              <p className="text-5xl font-semibold text-primary">
+                {authLoading ? "…" : currentCredits ?? 0}
               </p>
-              <p className="text-4xl font-bold text-primary">
-                {isLoading
-                  ? "—"
-                  : currentCredits === -1
-                    ? "∞"
-                    : currentCredits}
-              </p>
-              {creditsData && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Current plan: {currentPlanLabel}
-                </p>
-              )}
+              <p className="text-sm text-muted-foreground">Current plan: {currentPlanLabel}</p>
             </div>
-            <div className="rounded-xl border border-dashed border-primary/40 bg-background/80 p-4 text-sm text-muted-foreground">
-              TinLens deducts one credit per verification request. Trend
-              tracking, dashboards, and alerts are included in every paid plan.
+            <div className="rounded-2xl border border-dashed border-primary/40 bg-background/80 p-4 text-sm text-muted-foreground">
+              TinLens deducts one credit per verification. Trends, dashboards, and alerts are bundled with any paid plan.
+              Credits never expire, and we’ll roll out invoicing + auto top-ups soon.
             </div>
+            {!isAuthenticated && (
+              <Button asChild className="w-full">
+                <Link href="/sign-up">Create a free account</Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
 
@@ -87,74 +129,52 @@ export default function CreditsPage() {
               Why credits?
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <CardContent className="space-y-4 text-sm text-muted-foreground">
             <p>
-              Each credit covers full ingestion: transcription, retrieval,
-              evidence scoring, verdict explanation, and share-card rendering.
+              Credits guarantee that every verification runs the full agentic workflow instead of a demo shortcut. That
+              means consistent ingestion, reasoning, and shareable outputs across the web app, Chrome extension, and mobile app.
             </p>
             <p>
-              Credits never expire. Enterprise and newsroom teams can request
-              invoices or auto top-ups. Contact us for Mumbai Hacks partner
-              programmes.
+              Newsrooms and civic teams can request custom terms&mdash;invoices, role-based dashboards, Signal/WhatsApp alerts,
+              or on-prem deployments for sensitive missions.
             </p>
           </CardContent>
         </Card>
       </section>
 
       <section className="mt-12 grid gap-6 md:grid-cols-3">
-        {CREDIT_PACKS.map((plan) => (
+        {plans.map((plan) => (
           <Card
             key={plan.id}
-            className={plan.highlight ? "border-primary shadow-lg" : ""}
+            className={cn("flex flex-col", plan.highlight && "border-primary shadow-lg shadow-primary/20")}
           >
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{plan.name}</span>
+              <div className="flex items-center justify-between">
+                <CardTitle>{plan.name}</CardTitle>
                 {plan.highlight && (
-                  <span className="text-xs uppercase tracking-widest text-primary">
-                    Popular
-                  </span>
+                  <Badge variant="secondary" className="border border-primary/30 text-primary">
+                    Launch promo
+                  </Badge>
                 )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {plan.description}
-              </p>
-              <div>
-                <p className="text-3xl font-semibold">{plan.priceLabel}</p>
-                <p className="text-sm text-muted-foreground">
-                  {plan.planTier === "pro"
-                    ? "Unlimited analyses"
-                    : `${plan.credits} credits`}
-                </p>
               </div>
-              <ul className="text-sm text-muted-foreground space-y-1">
+              <p className="text-sm text-muted-foreground">{plan.description}</p>
+            </CardHeader>
+            <CardContent className="flex flex-1 flex-col gap-4">
+              <div>
+                <p className="text-3xl font-semibold">{plan.price}</p>
+              </div>
+              <ul className="flex-1 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                 {plan.features.map((feature) => (
-                  <li key={feature}>• {feature}</li>
+                  <li key={feature}>{feature}</li>
                 ))}
               </ul>
-              <Button
-                className="w-full"
-                variant={plan.highlight ? "default" : "outline"}
-                onClick={handlePlanClick}
-                disabled
-              >
-                {plan.planTier === "pro" ? "Included for now" : "Coming soon"}
+              <Button disabled={!plan.highlight} variant={plan.highlight ? "default" : "outline"} className="w-full">
+                {plan.cta}
               </Button>
             </CardContent>
           </Card>
         ))}
       </section>
     </main>
-  );
-}
-
-function BadgeHeading() {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
-      <Sparkles className="h-3 w-3" />
-      TinLens Credits
-    </span>
   );
 }

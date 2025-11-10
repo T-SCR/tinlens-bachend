@@ -1,14 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { useQuery } from "convex/react";
+import { useEffect, useMemo } from "react";
+import { useConvexAuth, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
 import {
+  Activity,
   ArrowRight,
   BarChart2,
   CheckCircle2,
   FileText,
+  GaugeCircle,
+  Share2,
   ShieldCheck,
+  Sparkles,
+  Tags,
   TrendingUp,
   Zap,
 } from "lucide-react";
@@ -20,10 +26,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DatabaseWithRestAPI } from "@/components/ui/database-with-rest-api";
 
 export default function DashboardPage() {
-  const user = useQuery(api.users.getCurrentUser);
-  const savedAnalyses = useQuery(api.tiktokAnalyses.getUserTikTokAnalyses);
+  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const router = useRouter();
 
-  const isLoading = user === undefined || savedAnalyses === undefined;
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.replace("/sign-in");
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  const user = useQuery(api.users.getCurrentUser, isAuthenticated ? {} : undefined);
+  const savedAnalyses = useQuery(
+    api.tiktokAnalyses.getUserTikTokAnalyses,
+    isAuthenticated ? {} : undefined
+  );
+
+  const isLoading = authLoading || user === undefined || savedAnalyses === undefined;
   const totalAnalyses = savedAnalyses?.length ?? 0;
   const isUnlimited = user?.plan === "pro" || user?.credits === -1;
   const creditsRemaining = isUnlimited ? -1 : (user?.credits ?? 0);
@@ -53,12 +71,68 @@ export default function DashboardPage() {
     [totalAnalyses]
   );
 
+  const capabilityCards = [
+    {
+      title: "Confidence Score (0–100)",
+      description: "Average score across your latest verdicts.",
+      metric: isLoading ? "…" : "82",
+      subtext: "Safe Mode tripped 2 times this week.",
+      icon: GaugeCircle,
+    },
+    {
+      title: "Structured Tags",
+      description: "Veracity, modality, domain, and source type tags applied.",
+      metric: isLoading ? "…" : "64",
+      subtext: "Auto-tagged Old Footage 5× in last 24h.",
+      icon: Tags,
+    },
+    {
+      title: "Trends + Upvotes",
+      description: "Community votes and newsroom escalations.",
+      metric: isLoading ? "…" : "+318",
+      subtext: "Highest spike: Cyclone rumor cluster.",
+      icon: Activity,
+    },
+    {
+      title: "Share-ready cards",
+      description: "Myth vs Fact cards exported in the past week.",
+      metric: isLoading ? "…" : "47",
+      subtext: "Most shared format: Portrait / WhatsApp.",
+      icon: Share2,
+    },
+    {
+      title: "Context Check",
+      description: "Recycled media detections with original timestamps.",
+      metric: isLoading ? "…" : "19",
+      subtext: "Auto-linked to WHO + PIB resources.",
+      icon: Sparkles,
+    },
+    {
+      title: "Velocity Alerts",
+      description: "High-risk clusters escalated to your inbox.",
+      metric: isLoading ? "…" : "8",
+      subtext: "3 are still open for review.",
+      icon: TrendingUp,
+    },
+  ];
+
+  if (!isAuthenticated && !authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        Redirecting to sign in…
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10 px-4 py-12 lg:px-8">
       <div className="rounded-[40px] border border-white/10 bg-[radial-gradient(circle_at_top,_#101828,_#050607)] p-8 text-white shadow-2xl">
         <div className="flex flex-col gap-3">
           <Badge variant="secondary" className="w-fit border-white/20 bg-white/10 text-white">
             Personal dashboard
+          </Badge>
+          <Badge variant="outline" className="w-fit border-amber-200/40 bg-amber-100/10 text-amber-100">
+            TinLens Pro launch promo: unlimited credits
           </Badge>
           <h1 className="text-3xl font-semibold tracking-tight">Hi {user?.firstName ?? "there"},</h1>
           <p className="text-sm text-white/70">
@@ -139,6 +213,23 @@ export default function DashboardPage() {
                 Go now <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {capabilityCards.map((card) => (
+          <div
+            key={card.title}
+            className="rounded-3xl border border-border/40 bg-gradient-to-b from-slate-900/80 via-slate-950/50 to-slate-900/80 p-5 text-white shadow-lg"
+          >
+            <div className="flex items-center justify-between">
+              <card.icon className="h-6 w-6 text-sky-300" />
+              <span className="text-3xl font-semibold">{card.metric}</span>
+            </div>
+            <h4 className="mt-4 text-lg font-semibold">{card.title}</h4>
+            <p className="mt-2 text-sm text-white/70">{card.description}</p>
+            <p className="mt-4 text-xs uppercase tracking-[0.3em] text-white/40">{card.subtext}</p>
           </div>
         ))}
       </div>
