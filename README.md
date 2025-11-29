@@ -125,9 +125,6 @@ Before shipping a new build, confirm the following secrets exist inside **Vercel
 ### External APIs & Services
 
 - **Exa Search** - Semantic web search for evidence retrieval
-- **TikTok API** (`@tobyg74/tiktok-api-dl`) - Video content extraction
-- **Twitter/X API** (`@the-convocation/twitter-scraper`) - Social media analysis
-- **YouTube API** - Video captions and metadata extraction
 - **Firecrawl** - Web content scraping and extraction
 - **Trusted Source Registry** - WHO/ICMR, government advisories, fact-check databases
 
@@ -208,7 +205,7 @@ Before shipping a new build, confirm the following secrets exist inside **Vercel
 
 ### Getting Started
 
-1. **Visit the Platform**: Navigate to [tinlens.demo.com] (placeholder)
+1. **Visit the Platform**: Navigate to [https://tinlens.vercel.app/] (placeholder)
 2. **Sign Up/Login**: Create account using email or social login
 3. **Submit Content**: Paste text/URL, Twitter post, YouTube link, or upload media
 4. **Automatic Analysis**: TinLens extracts claims, detects language, and searches for evidence
@@ -216,193 +213,7 @@ Before shipping a new build, confirm the following secrets exist inside **Vercel
 6. **Share Results**: Download Myth vs Fact cards in English/Hindi for social sharing
 7. **Track Trends**: View emerging misinformation themes in the dashboard
 
-### Demo Screenshots
 
-> **Note**: Screenshots are from a live demo of the platform.
-
-#### 1. Landing Page & Hero Section
-
-![Landing Page](readme/assests/sc-1.png)
-
-- Clean, modern landing page with a clear value proposition.
-- Explains the platform's mission to combat misinformation.
-- Clear call-to-action buttons to get started.
-
-#### 2. Browser Extension
-
-![Analysis Interface](readme/assests/sc-2.png)
-
-#### 3. Fact-Check Results Dashboard
-
-![Fact-Check Dashboard](readme/assests/sc-3.png)
-
-- Comprehensive results display with an overall credibility score.
-- Detailed fact-check breakdown with sources and explanations.
-- Links to creator credibility profiles.
-
-#### 4. Detailed Analysis View
-
-![Detailed Analysis](readme/assests/sc-4.png)
-
-- In-depth view with full transcription, sentiment analysis, and identified claims.
-- Allows users to scrutinize the evidence and analysis process.
-
-#### 5. Creator Credibility Profile
-
-![Creator Credibility](readme/assests/sc-6.png)
-
-- Historical credibility trends for content creators.
-- Analysis of past content and community feedback.
-
-#### 6. Saved Analyses & History
-
-![Saved Analyses](readme/assests/sc-5.png)
-
-## 🏗️ Technical Architecture
-
-### System Overview
-
-TinLens follows a modern full-stack architecture with the following components:
-![Architecture Diagram](readme/assests/sc-7.jpeg)
-
-### Database Schema (Convex)
-
-Our data model consists of four main entities:
-
-#### `users`
-
-- Synchronized from Clerk authentication
-- Stores user profile information and preferences
-
-#### `contentCreators`
-
-- Tracks credibility metrics for content creators across platforms
-- Maintains credibility ratings (0-10 scale) based on analysis history
-- Supports multi-platform creator identification
-
-#### `tiktokAnalyses`
-
-- Stores comprehensive analysis results for each processed content
-- Links to users and content creators
-- Contains transcription, metadata, news detection, and fact-check results
-
-#### `creatorComments`
-
-- Enables community feedback on creator credibility
-- Supports crowd-sourced verification efforts
-
-### AI/ML Tools Architecture (`@/tools`)
-
-The `@/tools` directory contains the core AI-powered functionality, organized into modular components:
-
-#### `helpers.ts` - Core Utilities
-
-```typescript
-// Video transcription using OpenAI Whisper
-export async function transcribeVideoDirectly(videoUrl: string);
-
-// Web content scraping using Firecrawl
-export async function scrapeWebContent(url: string);
-```
-
-#### `tiktok-analysis.ts` - Platform-Specific Analysis
-
-- **`analyzeTikTokVideo`**: Extracts metadata, download links, and video content from TikTok URLs
-- **`transcribeTikTokVideo`**: Converts TikTok audio to text using OpenAI Whisper
-- **`compareTikTokVideos`**: Analyzes multiple videos for trends and patterns
-
-Key technologies:
-
-- `@tobyg74/tiktok-api-dl` for TikTok video extraction
-- OpenAI Whisper via `ai` SDK for speech-to-text
-- Real-time video processing and analysis
-
-#### `content-analysis.ts` - Content Intelligence
-
-- **`analyzeContentSentiment`**: NLP-powered sentiment analysis and theme extraction
-- **`extractHashtagsAndMentions`**: Social media element extraction using regex patterns
-- **`generateContentInsights`**: AI-driven recommendations and quality scoring
-- **`generateVideoSummary`**: Automated content summarization
-
-Advanced features:
-
-- Multi-dimensional sentiment analysis
-- Viral potential prediction algorithms
-- Accessibility compliance checking
-- Engagement metric calculations
-
-#### `fact-checking.ts` - Misinformation Detection
-
-- **`detectNewsContent`**: Identifies content requiring fact-checking using NLP
-- **`researchAndFactCheck`**: Cross-references claims with credible sources
-- **`analyzeCreatorCredibility`**: Calculates creator trustworthiness scores
-
-Sophisticated algorithms:
-
-- Domain credibility evaluation using LLM reasoning
-- Multi-source claim verification
-- Confidence scoring with uncertainty quantification
-- Automated source reliability assessment
-
-#### `index.ts` - Tool Orchestration
-
-Exports organized tool collections:
-
-```typescript
-export const allTiktokAnalysisTools = [...];
-export const allFactCheckingTools = [...];
-export const allTools = [...]; // Combined toolkit
-```
-
-### Data Flow & Processing Pipeline
-
-1. **Content Ingestion**
-
-   ```
-   User Input (URL) → Platform Detection → Content Extraction
-   ```
-
-2. **Multi-Modal Analysis**
-
-   ```
-   Video/Audio → Whisper Transcription → Text Analysis
-   Text Content → NLP Processing → Claim Extraction
-   ```
-
-3. **Fact-Checking Pipeline**
-
-   ```
-   Claims → Web Research → Source Verification → Credibility Scoring
-   ```
-
-4. **Result Synthesis**
-   ```
-   Individual Results → Comprehensive Analysis → User Dashboard
-   ```
-
-### API Architecture
-
-#### `/api/transcribe` - Main Analysis Endpoint
-
-Handles multi-platform content analysis:
-
-```typescript
-// Request types supported
-interface RequestBody {
-  tiktokUrl?: string; // TikTok video URLs
-  twitterUrl?: string; // Twitter/X post URLs
-  webUrl?: string; // General web content
-  videoUrl?: string; // Direct video URLs
-}
-
-// Response structure
-interface AnalysisResult {
-  transcription: TranscriptionData;
-  metadata: ContentMetadata;
-  newsDetection: NewsDetectionResult;
-  factCheck: FactCheckData;
-  creatorCredibilityRating: number;
-}
 ```
 
 **Processing Flow:**
@@ -415,24 +226,6 @@ interface AnalysisResult {
 6. Creator credibility calculation
 7. Result compilation and return
 
-### Frontend Architecture
-
-#### Custom Hooks (`lib/hooks/`)
-
-- **`use-saved-analyses.ts`**: Database interaction for saved analyses
-- **`use-credible-sources.ts`**: Credible source management
-- **`use-all-analyses.ts`**: Comprehensive analysis data fetching
-
-#### Component Structure
-
-```
-components/
-├── ui/                    # Shadcn/UI base components
-├── analysis-renderer.tsx  # Display analysis results
-├── creator-credibility-display.tsx  # Credibility scoring UI
-├── language-provider.tsx  # I18n support
-└── theme-provider.tsx     # Dark/light mode
-```
 
 ### Security & Performance
 
@@ -489,6 +282,34 @@ components/
 - **News Organization API**: Integration capabilities for Indian newsrooms and fact-checkers
 - **Blockchain Verification**: Immutable fact-check records for transparency
 - **Community Moderator Tools**: Empower local community leaders to combat misinformation
+
+### Credibility algorithm is put in
+
+FUNCTION calculate_credibility(content):
+// 1. Initialize score to a neutral value
+score = 5.0
+
+// 2. Apply a significant adjustment based on fact-checking
+// This is the most heavily weighted factor.
+// (e.g., +3 for "true", -4 for "false")
+score += get_fact_check_modifier(content.factCheck)
+
+// 3. Apply moderate adjustments based on content quality
+// Considers transcription, news context, and content length.
+// (e.g., +0.5 for transcription, -1.5 for unverified news)
+
+
+score += get_content_quality_modifier(content.metadata)
+// 4. Apply minor adjustments based on the source platform
+// (e.g., -0.2 for Twitter, +0.1 for TikTok)
+score += get_platform_modifier(content.platform)
+// 5. Normalize the final score to be within 0-10
+final_score = clamp(score, 0, 10)
+RETURN final_score
+END FUNCTION
+
+Starting with a neutral value of 5.0 and then adjusting it based on several key factors. The most significant changes come from fact-checking results, while smaller adjustments are made for content quality, length, and the social media platform of origin. The final score is always normalized to fit on a 0 to 10 scale.
+
 
 ## 📄 License
 
