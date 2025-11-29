@@ -30,6 +30,8 @@ As digital citizens, we all play a role in upholding the truth. But the scale an
 4. **Empowers Users** with accessible tools for content verification
 5. **Builds Community Trust** through crowd-sourced verification mechanisms
 
+Presentation Slides: https://docs.google.com/presentation/d/1O4UOYZKQDwquQh6SQevZTGIWCmyUXNDOnwFYMIg6BFM/edit?usp=sharing
+
 ## 👥 Team Members
 
 | Name                                | Role                               | Contributions                                                                                    |
