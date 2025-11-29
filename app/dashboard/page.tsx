@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   BarChart3,
+  CheckCircle,
   Eye,
   GaugeCircle,
   Heart,
@@ -16,6 +17,8 @@ import {
   ShieldCheck,
   Sparkles,
   Tags,
+  TrendingUp,
+  XCircle,
   Zap,
 } from "lucide-react";
 import Link from "next/link";
@@ -31,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { AIInputWithFile } from "@/components/ui/ai-input-with-file";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
+import { useCredibleSources, useMisinformationSources } from "@/lib/hooks/use-credible-sources";
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
@@ -50,6 +54,8 @@ export default function DashboardPage() {
     api.tiktokAnalyses.getUserTikTokAnalyses,
     isAuthenticated ? {} : undefined
   );
+  const credibleSources = useCredibleSources(undefined, 5);
+  const misinformationSources = useMisinformationSources(undefined, 5);
 
   const isLoading = authLoading || user === undefined || savedAnalyses === undefined;
   const totalAnalyses = savedAnalyses?.length ?? 0;
@@ -326,7 +332,7 @@ export default function DashboardPage() {
                     maxFileSize={10}
                   />
                   <p className="text-xs text-muted-foreground px-2">
-                    Supports TikTok, X (Twitter), YouTube, Instagram Reels, web articles, and image analysis
+                    Supports X (Twitter), YouTube, Instagram Reels, web articles, and image analysis
                   </p>
                 </div>
               )}
@@ -486,6 +492,198 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Trending on TinLens */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          {/* Trending Feed */}
+          <Card className="lg:col-span-2 border-purple-500/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-purple-500" />
+                Trending on TinLens
+              </CardTitle>
+              <CardDescription>
+                Hot topics and trending content being fact-checked
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {savedAnalyses && savedAnalyses.length > 0 ? (
+                  savedAnalyses.slice(0, 3).map((analysis) => (
+                    <div
+                      key={analysis._id}
+                      className="flex items-start gap-3 rounded-lg border border-border/60 p-3 hover:bg-muted/50 cursor-pointer"
+                      onClick={() => router.push(`/news/${analysis._id}`)}
+                    >
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold">
+                        {(analysis.metadata?.creator || "U").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm">
+                            {analysis.metadata?.creator || "Anonymous"}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            @{(analysis.metadata?.creator || "user").toLowerCase().replace(/\s/g, "")}
+                          </span>
+                          <span className="text-xs text-muted-foreground">•</span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(analysis.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                          {analysis.transcription?.text?.slice(0, 100) || analysis.metadata?.title || "Content analysis"}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs">
+                            {analysis.factCheck?.verdict || "Pending"}
+                          </Badge>
+                          {typeof analysis.creatorCredibilityRating === "number" && (
+                            <span className={cn(
+                              "text-xs px-2 py-0.5 rounded font-medium",
+                              analysis.creatorCredibilityRating > 7 ? "bg-green-100 text-green-800" :
+                              analysis.creatorCredibilityRating >= 4 ? "bg-yellow-100 text-yellow-800" :
+                              "bg-red-100 text-red-800"
+                            )}>
+                              Creator Credibility: {analysis.creatorCredibilityRating.toFixed(1)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <TrendingUp className="mx-auto h-8 w-8 text-muted-foreground/50 mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      No trending content yet. Start analyzing to populate the feed!
+                    </p>
+                  </div>
+                )}
+                <Link href="/news" className="block">
+                  <Button variant="outline" className="w-full">
+                    View All Trending
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Credibility Rankings Sidebar */}
+          <div className="space-y-6">
+            {/* Top Credible Sources */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-500" />
+                  Top Credible Sources
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {credibleSources === undefined ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-10 w-full" />
+                    ))}
+                  </div>
+                ) : credibleSources.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No credible sources tracked yet
+                  </p>
+                ) : (
+                  credibleSources.map((source) => (
+                    <div
+                      key={`${source.creatorId}-${source.platform}`}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-xs font-bold">
+                          {(source.creatorName || source.creatorId).charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium line-clamp-1">
+                            {source.creatorName || source.creatorId}
+                          </p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span className="capitalize">{source.platform}</span>
+                            <span>•</span>
+                            <span className="text-emerald-600 font-medium">
+                              {source.credibilityRating.toFixed(1)}/10
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => router.push(`/creator/${encodeURIComponent(source.creatorId)}?platform=${source.platform}`)}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Top Misinformation Sources */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <XCircle className="h-4 w-4 text-red-500" />
+                  Top Misinformation Sources
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {misinformationSources === undefined ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-10 w-full" />
+                    ))}
+                  </div>
+                ) : misinformationSources.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No misinformation sources tracked yet
+                  </p>
+                ) : (
+                  misinformationSources.map((source) => (
+                    <div
+                      key={`${source.creatorId}-${source.platform}`}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-red-100 text-red-800 flex items-center justify-center text-xs font-bold">
+                          {(source.creatorName || source.creatorId).charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium line-clamp-1">
+                            {source.creatorName || source.creatorId}
+                          </p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <span className="capitalize">{source.platform}</span>
+                            <span>•</span>
+                            <span className="text-red-600 font-medium">
+                              {source.credibilityRating.toFixed(1)}/10
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => router.push(`/creator/${encodeURIComponent(source.creatorId)}?platform=${source.platform}`)}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </DashboardShell>
   );

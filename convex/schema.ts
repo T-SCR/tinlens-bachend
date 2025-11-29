@@ -145,6 +145,10 @@ const schema = defineSchema({
     creatorCredibilityRating: v.optional(v.number()), // 0-10 rating calculated for this analysis
     contentCreatorId: v.optional(v.id("contentCreators")), // Reference to the content creator
 
+    // Embedding + clustering (for claim clustering and trends)
+    embedding: v.optional(v.array(v.number())),
+    clusterId: v.optional(v.id("analysisClusters")),
+
     // Analysis flags
     requiresFactCheck: v.boolean(),
 
@@ -155,6 +159,20 @@ const schema = defineSchema({
     .index("by_requires_fact_check", ["requiresFactCheck"])
     .index("by_user_and_platform", ["userId", "metadata.platform"])
     .index("by_content_creator", ["contentCreatorId"]),
+
+  // Embedding-based clusters of similar analyses/claims
+  analysisClusters: defineTable({
+    label: v.string(),
+    platform: v.optional(v.string()),
+    centroid: v.array(v.number()),
+    size: v.number(),
+    exampleAnalysisIds: v.array(v.id("tiktokAnalyses")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    latestActivityAt: v.number(),
+  })
+    .index("by_size", ["size"])
+    .index("by_latest_activity", ["latestActivityAt"]),
 
   // Comments about content creators
   creatorComments: defineTable({

@@ -216,7 +216,7 @@ export const translations: Record<Language, Translations> = {
     // How it works
     howItWorksTitle: "How It Works",
     step1Title: "Paste URL",
-    step1Description: "Simply paste any TikTok video URL into our analyzer.",
+    step1Description: "Simply paste any social video or article URL into our analyzer.",
     step2Title: "AI Analysis",
     step2Description:
       "Our AI transcribes the content and performs comprehensive fact-checking.",
@@ -227,14 +227,14 @@ export const translations: Record<Language, Translations> = {
     // CTA Section
     ctaTitle: "Ready to Fight Misinformation?",
     ctaDescription:
-      "Join the fight against misinformation. Start fact-checking TikTok content today.",
+      "Join the fight against misinformation. Start fact-checking social content today.",
     getStarted: "Get Started Free",
     learnMore: "Learn More",
 
     // How It Works Steps
-    inputTikTokLink: "Input TikTok Link",
+    inputTikTokLink: "Input link",
     inputTikTokLinkDesc:
-      "Simply paste any TikTok video URL into our secure input field",
+      "Simply paste any public post, video, or article URL into our secure input field",
     audioTranscription: "Audio Transcription",
     audioTranscriptionDesc:
       "AI-powered transcription extracts and converts speech to text",

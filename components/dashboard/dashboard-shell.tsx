@@ -6,11 +6,13 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 import {
+  BarChart3,
   FileText,
   History,
   Home,
   Settings,
   ShieldCheck,
+  TrendingUp,
 } from "lucide-react";
 
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
@@ -25,7 +27,9 @@ type SidebarLinkConfig = {
 const NAV_LINKS: SidebarLinkConfig[] = [
   { label: "Dashboard", href: "/dashboard", icon: Home },
   { label: "Verify Content", href: "/verify", icon: ShieldCheck },
+  { label: "Trends", href: "/trends", icon: TrendingUp },
   { label: "Saved Analyses", href: "/analyses", icon: FileText },
+  { label: "Analytics", href: "/analytics", icon: BarChart3 },
   { label: "History", href: "/history", icon: History },
   { label: "Settings", href: "/settings", icon: Settings },
 ];

@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 // Hook to get all TikTok analyses from all users with client-side pagination
 export function useAllAnalyses() {
   const [displayCount, setDisplayCount] = useState(10);
-  const allAnalyses = useQuery(api.tiktokAnalyses.getAllAnalyses);
+  const allAnalyses = useQuery(api.analyses.getAllAnalyses);
 
   const displayedAnalyses = useMemo(() => {
     if (!allAnalyses) return [];
@@ -32,5 +32,5 @@ export function useAllAnalyses() {
 
 // Hook to get analysis statistics from all users
 export function useAllAnalysisStats() {
-  return useQuery(api.tiktokAnalyses.getAllAnalysisStats);
+  return useQuery(api.analyses.getAllAnalysisStats);
 }

@@ -1,0 +1,1 @@
+// Embeddings functionality removed

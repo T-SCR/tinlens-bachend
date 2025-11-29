@@ -1,6 +1,6 @@
 "use client";
 
-import { useAllAnalyses } from "@/lib/hooks/use-all-analyses";
+import { useUserAnalyses } from "@/lib/hooks/use-saved-analyses";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 
 export function AnalysesDashboard() {
-  const { analyses, isLoading } = useAllAnalyses();
+  const analyses = useUserAnalyses();
+  const isLoading = analyses === undefined;
 
   if (isLoading) {
     return (

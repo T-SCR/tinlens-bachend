@@ -304,9 +304,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     ) as typeof convexMetadata;
 
     // Persist analysis so history/counts update even if client doesn't save
-    if (convex) {
+        if (convex) {
       try {
-        await convex.mutation(
+        const savedId = await convex.mutation(
           api.tiktokAnalyses.saveTikTokAnalysisWithCredibility,
           {
             videoUrl: sanitizedUrl,
@@ -354,6 +354,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 : undefined,
           }
         );
+        if (savedId) {
+          // Analysis saved successfully
+        }
       } catch (persistError) {
         logger.warn("Failed to persist analysis to Convex", {
           requestId,
@@ -375,6 +378,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
     }
 
+    
     if (convex && !hasUnlimitedCredits) {
       try {
         await convex.mutation(api.credits.deductCredits, { amount: 1 });

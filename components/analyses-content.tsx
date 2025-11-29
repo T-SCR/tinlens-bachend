@@ -152,7 +152,7 @@ export function AnalysisPage({
                 <Badge variant="secondary" className="text-xs">
                   {analysis.metadata.platform === "twitter"
                     ? "Twitter/X"
-                    : "TikTok"}
+                    : (analysis.metadata.platform || "Social")}
                 </Badge>
               )}
               <span className="flex items-center gap-1.5">

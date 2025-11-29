@@ -15,12 +15,12 @@ export function HowItWorks() {
   const steps = [
     {
       step: 1,
-      title: "Paste TikTok or Twitter/X Link",
+      title: "Paste a social or article link",
       description:
-        "Paste any public TikTok or Twitter/X video URL into our secure analyzer.",
+        "Paste any public post, video, or article URL into our secure analyzer.",
       icon: LinkIcon,
       features: [
-        "Works with TikTok & Twitter/X",
+        "Works across major social platforms",
         "Secure URL processing",
         "No account required",
       ],
@@ -43,12 +43,12 @@ export function HowItWorks() {
       step: 3,
       title: "News & Claim Detection",
       description:
-        "Detects news, opinions, and factual claims in the content for both platforms.",
+        "Detects news, opinions, and factual claims in the content.",
       icon: SearchIcon,
       features: [
         "AI-powered claim extraction",
         "News vs. opinion detection",
-        "Works for TikTok & Twitter/X",
+        "Works across platforms",
       ],
       isReversed: false,
     },

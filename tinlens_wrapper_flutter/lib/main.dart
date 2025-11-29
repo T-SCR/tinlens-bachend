@@ -166,7 +166,7 @@ class _TikTokShareHandlerState extends State<TikTokShareHandler> {
     
     setState(() {
       _isLoading = true;
-      _statusMessage = 'Loading checkmate analysis...';
+      _statusMessage = 'Loading TinLens analysis...';
     });
 
     _webViewController?.loadRequest(Uri.parse(finalUrl));

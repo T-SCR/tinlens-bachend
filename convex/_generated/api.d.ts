@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as analyses from "../analyses.js";
 import type * as credits from "../credits.js";
 import type * as http from "../http.js";
 import type * as tiktokAnalyses from "../tiktokAnalyses.js";
@@ -27,6 +28,7 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  analyses: typeof analyses;
   credits: typeof credits;
   http: typeof http;
   tiktokAnalyses: typeof tiktokAnalyses;

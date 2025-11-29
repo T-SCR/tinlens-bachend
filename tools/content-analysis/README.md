@@ -181,4 +181,4 @@ import { calculateSentimentScore } from "./tools/content-analysis/helpers/sentim
 
 ## 📄 License
 
-This module is part of the Checkmate project and follows the same license terms.
+This module is part of the TinLens project and follows the same license terms.

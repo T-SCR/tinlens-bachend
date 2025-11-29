@@ -15,7 +15,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["generic-content.js", "tiktok-content.js"],
+      "js": ["generic-content.js"],
       "css": ["style.css"]
     }
   ],

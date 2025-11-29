@@ -7,12 +7,27 @@ export function useUserTikTokAnalyses() {
   return useQuery(api.tiktokAnalyses.getUserTikTokAnalyses);
 }
 
+// Generic alias: use all analyses for current user (internally uses tiktokAnalyses for now)
+export function useUserAnalyses() {
+  return useQuery(api.analyses.getUserAnalyses);
+}
+
 // Hook to get a specific analysis by ID
 export function useTikTokAnalysisById(
   analysisId: Id<"tiktokAnalyses"> | undefined
 ) {
   return useQuery(
     api.tiktokAnalyses.getTikTokAnalysisById,
+    analysisId ? { analysisId } : "skip"
+  );
+}
+
+// Generic alias: get a single analysis by ID
+export function useAnalysisById(
+  analysisId: Id<"tiktokAnalyses"> | undefined
+) {
+  return useQuery(
+    api.analyses.getAnalysisById,
     analysisId ? { analysisId } : "skip"
   );
 }
@@ -24,7 +39,7 @@ export function useAnalysesRequiringFactCheck(limit?: number) {
 
 // Hook to get user analysis statistics
 export function useUserAnalysisStats() {
-  return useQuery(api.tiktokAnalyses.getUserAnalysisStats);
+  return useQuery(api.analyses.getUserAnalysisStats);
 }
 
 // Hook to delete an analysis

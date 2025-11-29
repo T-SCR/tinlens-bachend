@@ -110,7 +110,7 @@ export function NewHeroSection({ initialUrl = "" }: NewHeroSectionProps) {
             </div>
 
             <p className="text-sm text-muted-foreground mt-3">
-              Supports X (Twitter), YouTube, Instagram, TikTok, and web articles
+              Supports X (Twitter), YouTube, Instagram, and web articles
             </p>
           </motion.div>
 

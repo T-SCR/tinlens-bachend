@@ -20,7 +20,7 @@ export function BrowserExtensionSection() {
             Browser extension
           </span>
           <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-            Verify content directly on TikTok, Instagram, and news sites.
+            Verify content directly on social platforms and news sites.
           </h2>
           <p className="text-base text-white/70">
             The TinLens Chrome extension mirrors the full dashboard pipeline. Highlight any text or paste a link to see

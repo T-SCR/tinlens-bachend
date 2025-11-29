@@ -1,4 +1,4 @@
-# checkmate_app
+# TinLens Flutter Wrapper
 
 A new Flutter project.
 

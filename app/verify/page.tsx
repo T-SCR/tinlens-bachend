@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -8,15 +8,14 @@ import {
   BarChart3,
   BookOpen,
   CheckCircle2,
-  Download,
   ExternalLink,
   Globe,
   Loader2,
   ShieldAlert,
-  Share2,
   Sparkles,
   Tag,
   TrendingUp,
+  Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,6 +35,7 @@ import { AIInputWithFile } from "@/components/ui/ai-input-with-file";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
 import { useContentAnalysis } from "@/lib/hooks/use-content-analysis";
 import type { ContentAnalysisData, FactCheckData } from "@/types/analysis";
+import { buildMockAnalysis } from "@/lib/mock-analysis";
 import { cn } from "@/lib/utils";
 import {
   calculateSentimentScore,
@@ -43,12 +43,6 @@ import {
   extractEmotions,
   calculateSentimentConfidence,
 } from "@/tools/content-analysis/helpers/sentiment";
-
-const SHARE_CARD_FORMATS = [
-  { id: "square", label: "Square 1080×1080" },
-  { id: "landscape", label: "Landscape 1920×1080" },
-  { id: "portrait", label: "Portrait 1080×1920" },
-];
 
 const CONFIDENCE_BANDS = [
   {
@@ -229,17 +223,38 @@ function VerifyPageContent() {
   const searchParams = useSearchParams();
   const linkParam = searchParams?.get("link");
   const lastLinkRef = useRef<string | null>(null);
+  const [mockResult, setMockResult] = useState<{ success: boolean; data: ContentAnalysisData; isMock: boolean } | null>(null);
+  const [inputUrl, setInputUrl] = useState("");
 
-  const { analyzeContent, isLoading, result, isSaving } = useContentAnalysis();
+  const { analyzeContent, isLoading, result, isSaving, reset } = useContentAnalysis();
 
   useEffect(() => {
     if (linkParam && linkParam !== lastLinkRef.current) {
       lastLinkRef.current = linkParam;
+      setInputUrl(linkParam);
       analyzeContent(linkParam, true);
     }
   }, [linkParam, analyzeContent]);
 
-  const analysis: ContentAnalysisData | null = result?.success && result.data ? result.data : null;
+  const handleMockDemo = () => {
+    const demoUrl = inputUrl.trim() || "https://x.com/madeinmumbai_/status/1941127480385106107";
+    setMockResult({
+      success: true,
+      data: buildMockAnalysis(demoUrl),
+      isMock: true,
+    });
+    toast.success("Mock Demo loaded! This shows how a real analysis looks.");
+  };
+
+  const handleReset = () => {
+    setMockResult(null);
+    reset();
+    setInputUrl("");
+  };
+
+  const activeResult = mockResult || result;
+  const analysis: ContentAnalysisData | null = activeResult?.success && activeResult.data ? activeResult.data : null;
+  const isMockDemo = mockResult !== null;
   const confidenceScore = useMemo(
     () => getConfidenceScore(analysis?.factCheck),
     [analysis]
@@ -293,47 +308,14 @@ function VerifyPageContent() {
       return;
     }
 
+    setInputUrl(url);
+    setMockResult(null);
+
     try {
       await analyzeContent(url, true);
     } catch (error) {
       console.error(error);
     }
-  };
-
-  const handleShareCard = (formatId: string, theme: "light" | "dark") => {
-    if (!analysis) {
-      toast.error("Run an analysis first.");
-      return;
-    }
-
-    const verdictToken = (() => {
-      const v = (verdictLabel || "").toLowerCase();
-      if (v.includes("true")) return "verified";
-      if (v.includes("false")) return "false";
-      if (v.includes("misleading")) return "misleading";
-      if (v.includes("unverifiable")) return "unverifiable";
-      return "unverifiable";
-    })();
-
-    const title = analysis.metadata.title || "TinLens Analysis";
-    const conf = confidenceScore ?? 0;
-    const creator = analysis.metadata.creator || "Unknown";
-    const platform = analysis.metadata.platform || "web";
-    const domain = formatDomain(analysis.metadata.originalUrl);
-
-    const qs = new URLSearchParams({
-      title,
-      verdict: verdictToken,
-      confidence: String(conf),
-      creator,
-      platform,
-      domain,
-      format: formatId,
-      theme,
-    });
-
-    const url = `/api/share?${qs.toString()}`;
-    window.open(url, "_blank");
   };
 
   return (
@@ -356,11 +338,36 @@ function VerifyPageContent() {
               Instant fact-checks with provenance trails
             </CardTitle>
             <CardDescription>
-              Paste a YouTube, Instagram, TikTok, or web article link to run TinLens checks: transcription, sentiment, fact-check, creator profile, and share-ready verdicts.
+              Paste a social post, video, or web article link to run TinLens checks: transcription, sentiment, fact-check, creator profile, and share-ready verdicts.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <AIInputWithFile onSubmit={handleAnalyze} />
+            
+            {/* Mock Demo Button */}
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                className="gap-2 border-purple-500/50 text-purple-500 hover:bg-purple-500/10"
+                onClick={handleMockDemo}
+              >
+                <Wand2 className="h-4 w-4" />
+                Try Mock Demo (Free!)
+              </Button>
+            </div>
+            
+            <p className="text-center text-sm text-muted-foreground">
+              Try it with any TikTok/Twitter(X) video URL to see the magic happen
+            </p>
+            
+            {isMockDemo && (
+              <div className="rounded-lg border border-purple-500/30 bg-purple-500/5 p-3 text-center">
+                <p className="text-sm text-purple-400">
+                  💡 The mock demo simulates the full analysis process with realistic data—perfect for testing without API costs!
+                </p>
+              </div>
+            )}
+            
             <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
@@ -392,19 +399,19 @@ function VerifyPageContent() {
           </Card>
         )}
 
-        {!analysis && !isLoading && (!result || !result.success) && (
+        {!analysis && !isLoading && (!activeResult || !activeResult.success) && (
           <Card className="border-dashed border-muted-foreground/30">
             <CardContent className="py-10 text-center space-y-3">
               <Sparkles className="mx-auto h-8 w-8 text-primary" />
               <h3 className="text-lg font-semibold">No analysis yet</h3>
               <p className="text-sm text-muted-foreground">
-                Drop a link above to generate your first TinLens verification report.
+                Drop a link above or try the Mock Demo to see how TinLens works.
               </p>
             </CardContent>
           </Card>
         )}
 
-        {result && !result.success && result.error && (
+        {result && !result.success && result.error && !isMockDemo && (
           <Card className="border-red-500/30 bg-red-500/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-500">
@@ -416,8 +423,28 @@ function VerifyPageContent() {
           </Card>
         )}
 
-        {analysis && result?.success && (
+        {analysis && activeResult?.success && (
           <div className="space-y-6">
+            {/* Mock Demo Header */}
+            {isMockDemo && (
+              <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-purple-500/5 to-transparent">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                      <span className="flex items-center gap-2">
+                        <Wand2 className="h-4 w-4 text-purple-500" />
+                        <span className="font-medium">Mock Analysis Complete</span>
+                      </span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleReset}>
+                      Reset
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             <section className="grid gap-6 xl:grid-cols-3">
               <Card className="xl:col-span-2 border-primary/20">
                 <CardHeader className="gap-4">
@@ -428,6 +455,11 @@ function VerifyPageContent() {
                     <Badge className={cn("text-xs", confidenceBand?.badgeClass)}>
                       {verdictLabel}
                     </Badge>
+                    {isMockDemo && (
+                      <Badge variant="outline" className="text-xs border-purple-500/50 text-purple-500">
+                        Demo Mode
+                      </Badge>
+                    )}
                   </div>
                   <CardTitle className="text-2xl font-semibold">
                     {analysis.metadata.title || "Content analysis"}

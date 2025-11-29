@@ -262,7 +262,7 @@ export const AnalysisCard = ({ analysis, className }: AnalysisCardProps) => {
 
               {/* Content Title */}
               <p className="text-sm text-foreground my-2">
-                {analysis.metadata?.title || "TikTok Analysis"}
+                {analysis.metadata?.title || "Content analysis"}
               </p>
 
               {/* Transcription Preview */}
