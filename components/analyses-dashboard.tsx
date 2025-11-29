@@ -1,15 +1,16 @@
 "use client";
 
-import { useUserAnalyses } from "@/lib/hooks/use-saved-analyses";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Calendar, Link as LinkIcon, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 export function AnalysesDashboard() {
-  const analyses = useUserAnalyses();
+  const analyses = useQuery(api.analyses.getUserAnalyses);
   const isLoading = analyses === undefined;
 
   if (isLoading) {
@@ -30,7 +31,7 @@ export function AnalysesDashboard() {
             <p className="text-muted-foreground mb-4">
               Start analyzing content to see your saved results here
             </p>
-            <Link href="/">
+            <Link href="/verify">
               <Button className="bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary/90">
                 Analyze Content
               </Button>
