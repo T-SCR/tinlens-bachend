@@ -344,20 +344,36 @@ function VerifyPageContent() {
           <CardContent className="space-y-4">
             <AIInputWithFile onSubmit={handleAnalyze} />
             
+            {/* AI Credits Notice */}
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                    AI Semantic Analysis Temporarily Unavailable
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Our OpenAI credits are currently depleted. Real-time analysis will resume soon. 
+                    In the meantime, try our <strong>Mock Demo</strong> below to see how TinLens works!
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             {/* Mock Demo Button */}
             <div className="flex justify-center">
               <Button
-                variant="outline"
-                className="gap-2 border-purple-500/50 text-purple-500 hover:bg-purple-500/10"
+                variant="default"
+                className="gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg"
                 onClick={handleMockDemo}
               >
                 <Wand2 className="h-4 w-4" />
-                Try Mock Demo (Free!)
+                Try Mock Demo (Free!) - See How It Works
               </Button>
             </div>
             
             <p className="text-center text-sm text-muted-foreground">
-              Try it with any TikTok/Twitter(X) video URL to see the magic happen
+              Click Mock Demo to see realistic fact-check scenarios (rotates through 5 different examples)
             </p>
             
             {isMockDemo && (

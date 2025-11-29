@@ -2,13 +2,13 @@
 
 import { useConvexAuth } from "convex/react";
 import { useRouter } from "next/navigation";
-import { TrendingUp, Flame, AlertTriangle, BarChart3, Globe, Users } from "lucide-react";
+import { TrendingUp, Flame, AlertTriangle, BarChart3, Globe } from "lucide-react";
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useAllAnalyses, useAllAnalysisStats } from "@/lib/hooks/use-all-analyses";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Mock trending clusters for demo
 const MOCK_CLUSTERS = [
@@ -46,30 +46,41 @@ const MOCK_CLUSTERS = [
   },
 ];
 
+// Mock platform distribution for demo
+const MOCK_PLATFORMS = [
+  { platform: "Twitter/X", count: 45 },
+  { platform: "TikTok", count: 38 },
+  { platform: "YouTube", count: 22 },
+  { platform: "Instagram", count: 18 },
+  { platform: "Facebook", count: 12 },
+];
+
 export default function TrendsPage() {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const router = useRouter();
-  const stats = useAllAnalysisStats();
-  const { analyses, isLoading } = useAllAnalyses();
 
   if (!authLoading && !isAuthenticated) {
     router.replace("/sign-in");
     return null;
   }
 
-  const totalAnalyses = stats?.totalAnalyses ?? 0;
-  const requiresFactCheck = stats?.requiresFactCheck ?? 0;
+  if (authLoading) {
+    return (
+      <DashboardShell>
+        <div className="space-y-8">
+          <Skeleton className="h-10 w-64" />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[1,2,3,4].map(i => <Skeleton key={i} className="h-32" />)}
+          </div>
+        </div>
+      </DashboardShell>
+    );
+  }
 
-  // Calculate platform distribution from analyses
-  const platformDistribution = (analyses || []).reduce((acc, analysis) => {
-    const platform = analysis.metadata?.platform || "web";
-    acc[platform] = (acc[platform] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-
-  const topPlatforms = Object.entries(platformDistribution)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  // Using mock data for demo
+  const totalAnalyses = 135;
+  const requiresFactCheck = 47;
+  const topPlatforms = MOCK_PLATFORMS.map(p => [p.platform, p.count] as [string, number]);
 
   return (
     <DashboardShell>
@@ -209,29 +220,18 @@ export default function TrendsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading...</p>
-              ) : topPlatforms.length === 0 ? (
-                <div className="text-center py-8">
-                  <Users className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    No platform data yet. Run some analyses to see distribution.
-                  </p>
-                </div>
-              ) : (
-                topPlatforms.map(([platform, count]) => (
-                  <div key={platform} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium capitalize">{platform}</span>
-                      <span className="text-muted-foreground">{count} analyses</span>
-                    </div>
-                    <Progress 
-                      value={(count / totalAnalyses) * 100} 
-                      className="h-2" 
-                    />
+              {topPlatforms.map(([platform, count]) => (
+                <div key={platform} className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium capitalize">{platform}</span>
+                    <span className="text-muted-foreground">{count} analyses</span>
                   </div>
-                ))
-              )}
+                  <Progress 
+                    value={(count / totalAnalyses) * 100} 
+                    className="h-2" 
+                  />
+                </div>
+              ))}
               
               {/* Mock geographic data */}
               <div className="mt-6 pt-4 border-t">
@@ -272,42 +272,40 @@ export default function TrendsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {(analyses || []).slice(0, 6).map((analysis) => {
-                const views = analysis.metadata?.stats?.views ?? Math.floor(Math.random() * 100000);
-                const velocity = Math.floor(Math.random() * 50 + 10);
-                return (
-                  <div
-                    key={analysis._id}
-                    className="rounded-lg border border-border/60 p-4 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs">
-                        {analysis.factCheck?.verdict || "pending"}
-                      </Badge>
-                      <Badge className="text-xs bg-red-500/15 text-red-500">
-                        +{velocity}% velocity
-                      </Badge>
-                    </div>
-                    <p className="font-medium text-sm line-clamp-2">
-                      {analysis.metadata?.title || "Content analysis"}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{analysis.metadata?.platform || "web"}</span>
-                      <span>•</span>
-                      <span>{views.toLocaleString()} views</span>
-                    </div>
+              {[
+                { title: "Operation Sindoor viral video claims", views: 2300000, velocity: 45, verdict: "misleading", platform: "Twitter/X" },
+                { title: "Health misinformation about vaccines", views: 1500000, velocity: 38, verdict: "false", platform: "TikTok" },
+                { title: "Political speech edited clip", views: 980000, velocity: 32, verdict: "misleading", platform: "YouTube" },
+                { title: "Breaking news verification", views: 750000, velocity: 28, verdict: "verified", platform: "Twitter/X" },
+                { title: "Celebrity fake endorsement", views: 520000, velocity: 22, verdict: "false", platform: "Instagram" },
+                { title: "Financial scam alert", views: 380000, velocity: 18, verdict: "false", platform: "Facebook" },
+              ].map((item, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg border border-border/60 p-4 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className="text-xs">
+                      {item.verdict}
+                    </Badge>
+                    <Badge className="text-xs bg-red-500/15 text-red-500">
+                      +{item.velocity}% velocity
+                    </Badge>
                   </div>
-                );
-              })}
-              {(!analyses || analyses.length === 0) && (
-                <div className="col-span-full text-center py-8">
-                  <TrendingUp className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p className="text-sm text-muted-foreground">
-                    No viral content detected yet. Analyses will appear here as they trend.
+                  <p className="font-medium text-sm line-clamp-2">
+                    {item.title}
                   </p>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{item.platform}</span>
+                    <span>•</span>
+                    <span>{item.views.toLocaleString()} views</span>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              Demo data shown for illustration. Real data from your analyses will appear here.
+            </p>
           </CardContent>
         </Card>
       </div>

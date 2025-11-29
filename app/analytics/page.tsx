@@ -7,39 +7,58 @@ import { BarChart3, Activity, AlertTriangle, TrendingUp } from "lucide-react";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAllAnalyses, useAllAnalysisStats } from "@/lib/hooks/use-all-analyses";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Mock data for demo
+const MOCK_STATS = {
+  totalAnalyses: 156,
+  requiresFactCheck: 42,
+  hasNewsContent: 89,
+  factCheckSummary: {
+    verifiedTrue: 45,
+    verifiedFalse: 38,
+    misleading: 28,
+    unverifiable: 15,
+    needsVerification: 30,
+  },
+};
+
+const MOCK_VIRAL = [
+  { title: "Viral health claim about vaccines", views: 2300000, verdict: "false" },
+  { title: "Political speech analysis", views: 1800000, verdict: "misleading" },
+  { title: "Breaking news verification", views: 1200000, verdict: "verified" },
+  { title: "Celebrity endorsement check", views: 890000, verdict: "false" },
+  { title: "Financial advice analysis", views: 650000, verdict: "unverifiable" },
+];
 
 export default function AnalyticsPage() {
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
   const router = useRouter();
-  const stats = useAllAnalysisStats();
-  const { analyses, isLoading } = useAllAnalyses();
 
   if (!authLoading && !isAuthenticated) {
     router.replace("/sign-in");
     return null;
   }
 
-  const totalAnalyses = stats?.totalAnalyses ?? 0;
-  const requiresFactCheck = stats?.requiresFactCheck ?? 0;
-  const hasNewsContent = stats?.hasNewsContent ?? 0;
+  if (authLoading) {
+    return (
+      <DashboardShell>
+        <div className="space-y-8">
+          <Skeleton className="h-10 w-48" />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[1,2,3,4].map(i => <Skeleton key={i} className="h-24" />)}
+          </div>
+        </div>
+      </DashboardShell>
+    );
+  }
 
-  const factSummary = stats?.factCheckSummary ?? {
-    verifiedTrue: 0,
-    verifiedFalse: 0,
-    misleading: 0,
-    unverifiable: 0,
-    needsVerification: 0,
-  };
-
-  const topViral = (analyses || [])
-    .slice()
-    .sort((a, b) => {
-      const aViews = a.metadata?.stats?.views ?? 0;
-      const bViews = b.metadata?.stats?.views ?? 0;
-      return bViews - aViews;
-    })
-    .slice(0, 5);
+  // Using mock data for demo
+  const totalAnalyses = MOCK_STATS.totalAnalyses;
+  const requiresFactCheck = MOCK_STATS.requiresFactCheck;
+  const hasNewsContent = MOCK_STATS.hasNewsContent;
+  const factSummary = MOCK_STATS.factCheckSummary;
+  const topViral = MOCK_VIRAL;
 
   return (
     <DashboardShell>
@@ -125,33 +144,25 @@ export default function AnalyticsPage() {
               </CardDescription>
             </CardHeader>
             <div className="px-6 pb-6 space-y-3">
-              {isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
-              ) : topViral.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No analyses with view stats yet.</p>
-              ) : (
-                topViral.map((analysis) => {
-                  const views = analysis.metadata?.stats?.views ?? 0;
-                  const platform = analysis.metadata?.platform ?? "web";
-                  const title = analysis.metadata?.title || "Content analysis";
-                  return (
-                    <div
-                      key={analysis._id}
-                      className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2 text-sm"
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-medium line-clamp-1">{title}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {platform} · {views.toLocaleString()} views
-                        </span>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {analysis.factCheck?.verdict ?? "pending"}
-                      </Badge>
-                    </div>
-                  );
-                })
-              )}
+              {topViral.map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2 text-sm"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-medium line-clamp-1">{item.title}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {item.views.toLocaleString()} views
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {item.verdict}
+                  </Badge>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground pt-2">
+                Demo data shown for illustration.
+              </p>
             </div>
           </Card>
         </div>
