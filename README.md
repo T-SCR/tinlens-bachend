@@ -55,28 +55,6 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 📚 Developer Documentation
-
-For new developers joining the project, comprehensive documentation is available:
-
-### 🚀 Quick Start
-
-- **[Developer Onboarding Guide](./docs/DEVELOPER_ONBOARDING.md)** - Complete setup and getting started guide
-
-### 📖 Core Documentation
-
-- **[Architecture Guide](./docs/ARCHITECTURE_GUIDE.md)** - System design and technology overview
-- **[Database Guide](./docs/DATABASE_GUIDE.md)** - Convex schema, operations, and patterns
-- **[Hooks Guide](./docs/HOOKS_GUIDE.md)** - Custom React hooks for data management
-- **[API Guide](./docs/API_GUIDE.md)** - API endpoints and interfaces
-
-### 🔧 Existing Guides
-
-- **[Refactoring Guide](./docs/REFACTORING_GUIDE.md)** - Code improvement guidelines
-- **[RSC Refactoring Guide](./docs/RSC_REFACTORING_GUIDE.md)** - React Server Components migration
-
-**New developers should start with the [Developer Onboarding Guide](./docs/DEVELOPER_ONBOARDING.md) for a complete setup walkthrough.**
-
 ## 🔑 Environment Variables
 
 Create a `.env.local` file in the root of your project and add the following variables:
