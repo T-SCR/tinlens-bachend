@@ -296,9 +296,24 @@ export const saveTikTokAnalysis = mutation({
         title: v.string(),
         description: v.optional(v.string()),
         creator: v.optional(v.string()),
+        creatorHandle: v.optional(v.string()),
         originalUrl: v.string(),
         contentType: v.optional(v.string()),
         platform: v.optional(v.string()),
+        thumbnailUrl: v.optional(v.string()),
+        publishedAt: v.optional(v.string()),
+        durationSeconds: v.optional(v.number()),
+        hashtags: v.optional(v.array(v.string())),
+        stats: v.optional(
+          v.object({
+            views: v.optional(v.number()),
+            likes: v.optional(v.number()),
+            comments: v.optional(v.number()),
+            shares: v.optional(v.number()),
+            saves: v.optional(v.number()),
+            plays: v.optional(v.number()),
+          })
+        ),
       })
     ),
     newsDetection: v.optional(
@@ -417,9 +432,24 @@ export const saveTikTokAnalysisWithCredibility = mutation({
         title: v.string(),
         description: v.optional(v.string()),
         creator: v.optional(v.string()),
+        creatorHandle: v.optional(v.string()),
         originalUrl: v.string(),
         contentType: v.optional(v.string()),
         platform: v.optional(v.string()),
+        thumbnailUrl: v.optional(v.string()),
+        publishedAt: v.optional(v.string()),
+        durationSeconds: v.optional(v.number()),
+        hashtags: v.optional(v.array(v.string())),
+        stats: v.optional(
+          v.object({
+            views: v.optional(v.number()),
+            likes: v.optional(v.number()),
+            comments: v.optional(v.number()),
+            shares: v.optional(v.number()),
+            saves: v.optional(v.number()),
+            plays: v.optional(v.number()),
+          })
+        ),
       })
     ),
     newsDetection: v.optional(

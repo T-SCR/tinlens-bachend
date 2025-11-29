@@ -41,12 +41,9 @@ export function CreditsDisplay({ className }: CreditsDisplayProps) {
     creditsData.credits === -1 ||
     creditsData.plan === "pro";
 
-  const label = hasUnlimited ? "∞ credits" : `${creditsData.credits ?? 0} credits`;
-  const planLabel = hasUnlimited
-    ? "Pro (promo)"
-    : creditsData.plan
-    ? creditsData.plan.charAt(0).toUpperCase() + creditsData.plan.slice(1)
-    : "Free";
+  const normalizedPlan = creditsData.plan ?? "free";
+  const planLabel = normalizedPlan.toUpperCase();
+  const creditsValue = hasUnlimited ? "∞" : (creditsData.credits ?? 0).toString();
 
   return (
     <Link
@@ -57,9 +54,10 @@ export function CreditsDisplay({ className }: CreditsDisplayProps) {
       )}
     >
       <Coins className="h-4 w-4" />
-      <span className="flex flex-col leading-tight">
-        <span className={cn("font-semibold", hasUnlimited && "text-lg")}>{label}</span>
-        <span className="text-xs uppercase tracking-wide text-muted-foreground">{planLabel}</span>
+      <span className="flex items-center gap-1.5">
+        <span className={cn("font-bold", hasUnlimited && "text-base")}>{creditsValue}</span>
+        <span className="text-xs">credits</span>
+        <span className="ml-1 text-xs font-bold uppercase tracking-wide">{planLabel}</span>
       </span>
     </Link>
   );

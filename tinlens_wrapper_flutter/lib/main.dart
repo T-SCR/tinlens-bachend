@@ -160,7 +160,7 @@ class _TikTokShareHandlerState extends State<TikTokShareHandler> {
   void _loadTikTokInWebView(String tiktokUrl) {
     // URL encode the TikTok link
     String encodedUrl = Uri.encodeComponent(tiktokUrl);
-    String finalUrl = 'https://checkmate-imaginehack.vercel.app/?link=$encodedUrl';
+    String finalUrl = 'https://tinlens.vercel.app/verify?link=$encodedUrl';
     
     print('Loading URL: $finalUrl');
     

@@ -8,9 +8,11 @@ import { StatStrip } from "@/components/sections/stat-strip";
 import { FeatureShowcase } from "@/components/sections/feature-showcase";
 import { UseCasesSection } from "@/components/sections/use-cases";
 import { ShareCardLab } from "@/components/sections/share-card-lab";
+import { BrowserExtensionSection } from "@/components/sections/browser-extension";
+import { AnalysisShowcaseSection } from "@/components/sections/analysis-showcase";
 import { DocsPreviewSection } from "@/components/sections/docs-preview";
-import { DatabaseWithRestAPI } from "@/components/ui/database-with-rest-api";
 import { RedirectAuthenticated } from "@/components/redirect-authenticated";
+import { Header } from "@/components/ui/header-2";
 
 export default async function Home({
   searchParams,
@@ -24,8 +26,9 @@ export default async function Home({
   const showEnhancedHero = !link;
   
   return (
-    <div>
+    <div className="relative">
       <RedirectAuthenticated />
+      <Header />
       {showEnhancedHero ? (
         <EnhancedHero />
       ) : (
@@ -38,12 +41,9 @@ export default async function Home({
       </div>
       <TrustedSourcesSection />
       <FeatureShowcase />
+      <AnalysisShowcaseSection />
+      <BrowserExtensionSection />
       <ShareCardLab />
-      <section className="bg-muted/20 py-24" id="stack">
-        <div className="container mx-auto max-w-6xl px-4">
-          <DatabaseWithRestAPI />
-        </div>
-      </section>
       <FeaturesSection />
       <UseCasesSection />
       <RedesignedHowItWorks />

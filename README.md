@@ -96,6 +96,23 @@ FIRECRAWL_API_KEY=fc-FAKEKEYFORDEMO0987654321
 EXA_API_KEY=your-exa-api-key-here
 ```
 
+> **Important for production deployments**
+>
+> - Replace the `pk_test_...` / `sk_test_...` Clerk values with your live publishable and secret keys inside the Vercel dashboard. Shipping a build with development keys triggers the `Clerk has been loaded with development keys` warning and enforces strict usage caps.
+> - Add `FIRECRAWL_API_KEY` and `EXA_API_KEY` to the Production environment as well. The app now ships with built-in scraping and DuckDuckGo-based fallbacks so `/api/transcribe` no longer returns `503`, but these keys unlock the high-fidelity Firecrawl + Exa pipeline that powers multi-source fact-checking.
+
+### ✅ Production Deployment Checklist
+
+Before shipping a new build, confirm the following secrets exist inside **Vercel → Settings → Environment Variables** (and mirrors in `.env.local` if you self-host):
+
+1. `OPENAI_API_KEY` – powers Whisper transcription and the verification agent.
+2. `FIRECRAWL_API_KEY` – enables high-fidelity scraping for social posts + articles.
+3. `EXA_API_KEY` – required for evidence gathering; without it fact-checking falls back to low-confidence scraping.
+4. `NEXT_PUBLIC_CONVEX_URL` + `CONVEX_DEPLOYMENT` – must match the Convex deployment you intend to use.
+5. Clerk keys (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, sign-in overrides) – production keys remove dev-mode limits.
+
+> Tip: add the same values to the **Preview** environment so staging builds behave exactly like production.
+
 ## 🛠️ Technologies Used
 
 ### Frontend Technologies
@@ -265,7 +282,7 @@ EXA_API_KEY=your-exa-api-key-here
 
 ### System Overview
 
-Checkmate follows a modern full-stack architecture with the following components:
+TinLens follows a modern full-stack architecture with the following components:
 ![Architecture Diagram](readme/assests/sc-7.jpeg)
 
 ### Database Schema (Convex)

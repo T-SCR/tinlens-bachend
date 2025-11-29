@@ -7,76 +7,17 @@ import { useConvexAuth, useQuery } from "convex/react";
 import { toast } from "sonner";
 
 import { api } from "@/convex/_generated/api";
+import type { ContentAnalysisData } from "@/types/analysis";
+import { buildMockAnalysis } from "@/lib/mock-analysis";
 
-interface TranscriptionData {
-  text: string;
-  segments: Array<{
-    text: string;
-    startSecond: number;
-    endSecond: number;
-  }>;
-  language?: string;
-}
-
-interface NewsDetection {
-  hasNewsContent: boolean;
-  confidence: number;
-  newsKeywordsFound: string[];
-  potentialClaims: string[];
-  needsFactCheck: boolean;
-  contentType: string;
-}
-
-interface FactCheckSource {
-  title: string;
-  url: string;
-  source: string;
-  relevance: number;
-  description?: string;
-}
-
-interface FactCheckResult {
-  claim: string;
-  status: string;
-  confidence: number;
-  analysis?: string;
-  sources?: FactCheckSource[];
-  error?: string;
-}
-
-interface FactCheckData {
-  totalClaims: number;
-  checkedClaims: number;
-  results: FactCheckResult[];
-  summary: {
-    verifiedTrue: number;
-    verifiedFalse: number;
-    misleading: number;
-    unverifiable: number;
-    needsVerification: number;
-  };
-  sources?: FactCheckSource[];
-}
-
-interface ContentAnalysisData {
-  transcription: TranscriptionData;
-  metadata: {
-    title: string;
-    description: string;
-    creator: string;
-    originalUrl: string;
-    platform?: string;
-  };
-  newsDetection: NewsDetection | null;
-  factCheck: FactCheckData | null;
-  requiresFactCheck: boolean;
-  creatorCredibilityRating?: number;
-}
+const MOCK_ANALYSIS_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_MOCK_ANALYSIS === "true";
 
 interface ContentAnalysisResult {
   success: boolean;
   data?: ContentAnalysisData;
   error?: string;
+  isMock?: boolean;
 }
 
 export function useContentAnalysis() {
@@ -106,27 +47,42 @@ export function useContentAnalysis() {
     };
 
     if (authLoading) {
-      const message = "Checking your account. Please try again.";
-      toast.info(message);
-      return failEarly(message);
+      // Auth state is still initializing on the client, but the API will
+      // validate the session via cookies. Continue instead of failing early.
+      toast.info("Checking your account… starting analysis");
     }
 
     if (!isAuthenticated) {
+      if (MOCK_ANALYSIS_ENABLED) {
+        const mockResult: ContentAnalysisResult = {
+          success: true,
+          data: buildMockAnalysis(url),
+          isMock: true,
+        };
+        setResult(mockResult);
+        setIsLoading(false);
+        toast.info("Showing TinLens demo analysis. Sign in to run full verifications.");
+        return mockResult;
+      }
+
       const message = "Please sign in to verify content with TinLens.";
       toast.error(message);
       return failEarly(message);
     }
 
     if (userCredits === undefined) {
-      const message = "Syncing your credits. Try again in a moment.";
-      toast.info(message);
-      return failEarly(message);
+      toast.info("Syncing your credits. Please wait...");
     }
 
-    const hasUnlimitedCredits =
-      userCredits.hasUnlimitedCredits || userCredits.credits === -1;
+    const hasUnlimitedCredits = userCredits
+      ? userCredits.hasUnlimitedCredits || userCredits.credits === -1
+      : true;
 
-    if (!hasUnlimitedCredits && userCredits.credits < 1) {
+    if (
+      userCredits &&
+      !hasUnlimitedCredits &&
+      userCredits.credits < 1
+    ) {
       const message =
         "You are out of credits. Purchase more to continue verifying.";
       toast.error(message);
@@ -144,25 +100,39 @@ export function useContentAnalysis() {
         /^https?:\/\/(www\.)?instagram\.com\/(p|reel|tv)\//;
       const youtubeUrlPattern =
         /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//;
+      const twitterUrlPattern =
+        /^https?:\/\/(www\.)?(twitter\.com|x\.com)\//;
+      const tiktokUrlPattern =
+        /^https?:\/\/(www\.)?tiktok\.com\//;
 
       const isInstagram = instagramUrlPattern.test(url);
       const isYouTube = youtubeUrlPattern.test(url);
+      const isTwitter = twitterUrlPattern.test(url);
+      const isTikTok = tiktokUrlPattern.test(url);
 
       const requestBody: {
         instagramUrl?: string;
         youtubeUrl?: string;
+        twitterUrl?: string;
+        tiktokUrl?: string;
         webUrl?: string;
         contentUrl?: string;
+        contentText?: string;
       } = {};
 
       if (isInstagram) {
         requestBody.instagramUrl = url;
       } else if (isYouTube) {
         requestBody.youtubeUrl = url;
+      } else if (isTwitter) {
+        requestBody.twitterUrl = url;
+      } else if (isTikTok) {
+        requestBody.tiktokUrl = url;
       } else if (/^https?:\/\//.test(url)) {
         requestBody.webUrl = url;
       } else {
-        requestBody.contentUrl = url;
+        // Plain text ingestion
+        requestBody.contentText = url;
       }
 
       const response = await fetch("/api/transcribe", {
@@ -177,7 +147,17 @@ export function useContentAnalysis() {
         const errorData = await response.json();
         throw new Error(
           errorData.error?.message ||
-            `Failed to analyze ${isInstagram ? "Instagram" : isYouTube ? "YouTube" : "web"} content`
+            `Failed to analyze ${
+              isInstagram
+                ? "Instagram"
+                : isYouTube
+                ? "YouTube"
+                : isTwitter
+                ? "Twitter/X"
+                : isTikTok
+                ? "TikTok"
+                : "web"
+            } content`
         );
       }
 
@@ -187,12 +167,28 @@ export function useContentAnalysis() {
         saveToDb &&
         isAuthenticated &&
         analysis.success &&
-        analysis.data
+        analysis.data &&
+        !analysis.isMock
       ) {
         try {
           setIsSaving(true);
 
-          if (analysis.data.creatorCredibilityRating !== undefined) {
+          const normalizedCredibility =
+            typeof analysis.data.creatorCredibilityRating === "number"
+              ? analysis.data.creatorCredibilityRating
+              : undefined;
+
+          // Sanitize metadata to only fields accepted by Convex validator
+          const sanitizedMetadata = {
+            title: analysis.data.metadata.title,
+            description: analysis.data.metadata.description,
+            creator: analysis.data.metadata.creator,
+            originalUrl: analysis.data.metadata.originalUrl,
+            platform: analysis.data.metadata.platform,
+            contentType: analysis.data.metadata.contentType,
+          } as const;
+
+          if (normalizedCredibility !== undefined) {
             await saveAnalysisWithCredibility({
               videoUrl: analysis.data.metadata.originalUrl,
               transcription: {
@@ -200,7 +196,7 @@ export function useContentAnalysis() {
                 duration: undefined,
                 language: analysis.data.transcription.language,
               },
-              metadata: analysis.data.metadata,
+              metadata: sanitizedMetadata,
               newsDetection: analysis.data.newsDetection || undefined,
               factCheck: analysis.data.factCheck
                 ? {
@@ -224,7 +220,7 @@ export function useContentAnalysis() {
                   }
                 : undefined,
               requiresFactCheck: analysis.data.requiresFactCheck,
-              creatorCredibilityRating: analysis.data.creatorCredibilityRating,
+              creatorCredibilityRating: normalizedCredibility,
             });
           } else {
             await saveAnalysis({
@@ -234,7 +230,7 @@ export function useContentAnalysis() {
                 duration: undefined,
                 language: analysis.data.transcription.language,
               },
-              metadata: analysis.data.metadata,
+              metadata: sanitizedMetadata,
               newsDetection: analysis.data.newsDetection || undefined,
               factCheck: analysis.data.factCheck
                 ? {
@@ -270,6 +266,17 @@ export function useContentAnalysis() {
       setResult(analysis);
       return analysis;
     } catch (error) {
+      if (MOCK_ANALYSIS_ENABLED) {
+        const mockResult: ContentAnalysisResult = {
+          success: true,
+          data: buildMockAnalysis(url),
+          isMock: true,
+        };
+        setResult(mockResult);
+        toast.info("AI API unavailable. Displaying mock analysis instead.");
+        return mockResult;
+      }
+
       const message =
         error instanceof Error ? error.message : "Unknown error occurred";
       return failEarly(message);

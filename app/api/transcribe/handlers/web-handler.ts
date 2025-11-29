@@ -7,9 +7,10 @@ import {
 } from "./base-handler";
 import { ApiError } from "../../../../lib/api-error";
 import { scrapeWebContent } from "../../../../tools/helpers";
-import { researchAndFactCheck } from "../../../../tools/fact-checking";
+import { detectNewsContent, researchAndFactCheck } from "../../../../tools/fact-checking";
 import { calculateCreatorCredibilityRating } from "../../../../tools/content-analysis";
 import { logger } from "../../../../lib/logger";
+import { isStrictRealMode } from "../../../../lib/config";
 
 /**
  * Web content-specific data extracted from the platform
@@ -18,6 +19,7 @@ interface WebExtractedData extends ExtractedContent {
   content: string;
   author?: string;
   metadata?: {
+    url?: string;
     publishedTime?: string;
     modifiedTime?: string;
     keywords?: string;
@@ -42,9 +44,9 @@ interface WebExtractedData extends ExtractedContent {
  * ```
  */
 export class WebHandler extends BaseHandler {
-  private readonly handlerPlatform: "web" | "instagram" | "youtube";
+  private readonly handlerPlatform: "web" | "instagram" | "youtube" | "twitter" | "tiktok";
 
-  constructor(platform: "web" | "instagram" | "youtube" = "web") {
+  constructor(platform: "web" | "instagram" | "youtube" | "twitter" | "tiktok" = "web") {
     super(platform);
     this.handlerPlatform = platform;
   }
@@ -71,12 +73,33 @@ export class WebHandler extends BaseHandler {
       const scrapeResult = await scrapeWebContent(url);
 
       if (!scrapeResult.success || !scrapeResult.data) {
-        throw ApiError.webScrapeFailed(
-          url,
-          new Error(
-            scrapeResult.error || "Web scraping returned unsuccessful status"
-          )
-        );
+        logger.warn("Scrape failed", {
+          requestId: context.requestId,
+          platform: this.platform,
+          operation: "extract-content",
+          metadata: { url, error: scrapeResult.error || "unknown" },
+        });
+        if (isStrictRealMode) {
+          throw ApiError.webScrapeFailed(url, new Error(scrapeResult.error || "unknown"));
+        }
+
+        const fallbackData: WebExtractedData = {
+          title: (() => {
+            try {
+              return new URL(url).hostname || "Web Content";
+            } catch {
+              return "Web Content";
+            }
+          })(),
+          description: url,
+          creator: "Unknown",
+          content: "",
+          author: "Unknown",
+          metadata: { url },
+          type: this.handlerPlatform === "web" ? "web_content" : "social_content",
+        };
+
+        return fallbackData;
       }
 
       const data = scrapeResult.data;
@@ -103,12 +126,43 @@ export class WebHandler extends BaseHandler {
         },
         error as Error
       );
-
-      if (error instanceof ApiError) {
-        throw error;
+      if (isStrictRealMode) {
+        throw ApiError.webScrapeFailed(url, error as Error);
       }
 
-      throw ApiError.webScrapeFailed(url, error as Error);
+      if (error instanceof ApiError) {
+        logger.warn("Scrape threw ApiError, using URL-only fallback", {
+          requestId: context.requestId,
+          platform: this.platform,
+          operation: "extract-content",
+          metadata: { url, errorMessage: error.message },
+        });
+      } else {
+        logger.warn("Scrape failed unexpectedly, using URL-only fallback", {
+          requestId: context.requestId,
+          platform: this.platform,
+          operation: "extract-content",
+          metadata: { url, errorMessage: (error as Error)?.message },
+        });
+      }
+
+      const fallbackData: WebExtractedData = {
+        title: (() => {
+          try {
+            return new URL(url).hostname || "Web Content";
+          } catch {
+            return "Web Content";
+          }
+        })(),
+        description: url,
+        creator: "Unknown",
+        content: "",
+        author: "Unknown",
+        metadata: { url },
+        type: this.handlerPlatform === "web" ? "web_content" : "social_content",
+      };
+
+      return fallbackData;
     }
   }
 
@@ -134,6 +188,57 @@ export class WebHandler extends BaseHandler {
   }
 
   /**
+   * Detect news/claims and potential fact-check need
+   */
+  protected async detectNews(
+    transcription: TranscriptionResult | null,
+    extractedData: ExtractedContent | null,
+    context: ProcessingContext
+  ) {
+    try {
+      const text = transcription?.text || (extractedData as WebExtractedData | null)?.content || (extractedData?.description ?? "");
+      if (!text || text.trim().length === 0) {
+        return null;
+      }
+
+      const title = (extractedData as WebExtractedData | null)?.title || "";
+      const detection = await detectNewsContent.execute(
+        { transcription: text, title },
+        { toolCallId: "web-news-detection", messages: [] }
+      );
+      if (!detection.success || !detection.data) {
+        return null;
+      }
+
+      const data = detection.data as {
+        hasNewsContent: boolean;
+        confidence: number;
+        newsKeywordsFound: string[];
+        potentialClaims: string[];
+        needsFactCheck: boolean;
+        contentType: string;
+      };
+
+      return {
+        hasNewsContent: data.hasNewsContent,
+        confidence: data.confidence,
+        newsKeywordsFound: data.newsKeywordsFound,
+        potentialClaims: data.potentialClaims,
+        needsFactCheck: data.needsFactCheck,
+        contentType: data.contentType,
+      };
+    } catch (error) {
+      logger.warn("News detection failed", {
+        requestId: context.requestId,
+        platform: this.platform,
+        operation: "news-detection",
+        metadata: { errorMessage: (error as Error)?.message },
+      });
+      return null;
+    }
+  }
+
+  /**
    * Fact-check the web article content
    * @param transcription - Always null for web content
    * @param extractedData - Original web content data
@@ -153,16 +258,117 @@ export class WebHandler extends BaseHandler {
     const textToFactCheck = webData.content || webData.description;
 
     if (!textToFactCheck || textToFactCheck.trim().length === 0) {
-      logger.debug("No content available for fact-checking", {
-        requestId: context.requestId,
-        platform: this.platform,
-        operation: "fact-check",
-        metadata: {
-          hasContent: !!webData.content,
-          hasDescription: !!webData.description,
-        },
-      });
-      return null;
+      logger.debug(
+        "No content available for fact-checking, attempting URL-only research fallback",
+        {
+          requestId: context.requestId,
+          platform: this.platform,
+          operation: "fact-check",
+          metadata: {
+            hasContent: !!webData.content,
+            hasDescription: !!webData.description,
+          },
+        }
+      );
+
+      const fallbackTranscription = `URL: ${context.url}\nTitle: ${
+        webData.title || "Untitled"
+      }\nSummary: ${webData.description || ""}`;
+
+      try {
+        const factCheck = await researchAndFactCheck.execute(
+          {
+            transcription: fallbackTranscription,
+            title: webData.title,
+            context: "URL-only fallback: page content unavailable",
+          },
+          {
+            toolCallId: "web-verification-fallback",
+            messages: [],
+          }
+        );
+
+        if (factCheck.success && factCheck.data) {
+          interface FactCheckData {
+            overallStatus?: string;
+            confidence?: number;
+            reasoning?: string;
+            sources?: Array<{ url: string; title: string; credibility: number }>;
+            webSearchAnalysis?: { summary?: string };
+          }
+
+          const resultData = factCheck.data as FactCheckData;
+
+          const factCheckResult: FactCheckResult = {
+            verdict:
+              (resultData.overallStatus as FactCheckResult["verdict"]) ||
+              "unverified",
+            confidence: Math.round((resultData.confidence || 0.5) * 100),
+            explanation: resultData.reasoning || "No analysis available",
+            content:
+              fallbackTranscription.substring(0, 500) +
+              (fallbackTranscription.length > 500 ? "..." : ""),
+            sources: resultData.sources || [],
+            flags: [],
+          };
+
+          logger.info("URL-only fact-check completed", {
+            requestId: context.requestId,
+            platform: this.platform,
+            operation: "fact-check",
+            metadata: {
+              verdict: factCheckResult.verdict,
+              confidence: factCheckResult.confidence,
+              sourcesCount: factCheckResult.sources.length,
+              title: webData.title,
+            },
+          });
+
+          return factCheckResult;
+        }
+
+        logger.warn("URL-only fact-check returned unsuccessful result", {
+          requestId: context.requestId,
+          platform: this.platform,
+          operation: "fact-check",
+          metadata: { success: factCheck.success, title: webData.title },
+        });
+
+        return {
+          verdict: "unverified",
+          confidence: 0,
+          explanation:
+            "Verification service temporarily unavailable. Manual fact-checking recommended.",
+          content:
+            fallbackTranscription.substring(0, 500) +
+            (fallbackTranscription.length > 500 ? "..." : ""),
+          sources: [],
+          flags: ["service_unavailable"],
+        };
+      } catch (error) {
+        logger.error(
+          "URL-only fact-check process failed",
+          {
+            requestId: context.requestId,
+            platform: this.platform,
+            operation: "fact-check",
+            metadata: { title: webData.title },
+          },
+          error as Error
+        );
+
+        return {
+          verdict: "unverified",
+          confidence: 0,
+          explanation:
+            "Fact-checking failed due to technical error. Manual verification recommended.",
+          content:
+            fallbackTranscription.substring(0, 500) +
+            (fallbackTranscription.length > 500 ? "..." : ""),
+          sources: [],
+          flags: ["technical_error"],
+        };
+      }
     }
 
     try {

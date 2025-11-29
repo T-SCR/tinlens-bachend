@@ -30,7 +30,9 @@ export function AnalysesDashboard() {
               Start analyzing content to see your saved results here
             </p>
             <Link href="/">
-              <Button>Analyze Content</Button>
+              <Button className="bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary/90">
+                Analyze Content
+              </Button>
             </Link>
           </div>
         </CardContent>

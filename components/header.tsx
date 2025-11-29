@@ -7,7 +7,7 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignedIn, UserButton } from "@clerk/nextjs";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import React from "react";
@@ -116,18 +116,6 @@ export function Header() {
           <ThemeToggle />
         </>
       )}
-      <SignedOut>
-        <SignInButton>
-          <Button
-            variant="default"
-            size="sm"
-            className="w-full justify-start"
-            onClick={closeMenu}
-          >
-            {t.signIn}
-          </Button>
-        </SignInButton>
-      </SignedOut>
       <SignedIn>
         {mobile ? (
           <div className="w-full flex items-center">

@@ -27,6 +27,18 @@ export interface ExtractedContent {
   likeCount?: number;
   shareCount?: number;
   publishedAt?: string;
+  hashtags?: string[];
+  creatorHandle?: string;
+  authorHandle?: string;
+  type?: string;
+  stats?: {
+    views?: number;
+    likes?: number;
+    comments?: number;
+    shares?: number;
+    saves?: number;
+    plays?: number;
+  };
   [key: string]: unknown; // Allow additional platform-specific properties
 }
 
@@ -47,6 +59,18 @@ export interface FactCheckResult {
 }
 
 /**
+ * News detection result interface (aligned with frontend expectations)
+ */
+export interface NewsDetectionResult {
+  hasNewsContent: boolean;
+  confidence: number; // 0-1 probability
+  newsKeywordsFound: string[];
+  potentialClaims: string[];
+  needsFactCheck: boolean;
+  contentType: string; // e.g. "news_factual" | "entertainment_opinion"
+}
+
+/**
  * Base interface for all platform analysis results
  */
 export interface BaseAnalysisResult {
@@ -57,7 +81,22 @@ export interface BaseAnalysisResult {
     creator: string;
     originalUrl: string;
     platform: string;
+    contentType?: string;
+    thumbnailUrl?: string;
+    hashtags?: string[];
+    creatorHandle?: string;
+    publishedAt?: string;
+    durationSeconds?: number;
+    stats?: {
+      views?: number;
+      likes?: number;
+      comments?: number;
+      shares?: number;
+      saves?: number;
+      plays?: number;
+    };
   };
+  newsDetection: NewsDetectionResult | null;
   factCheck: FactCheckResult | null;
   requiresFactCheck: boolean;
   creatorCredibilityRating: number | null;
@@ -72,6 +111,34 @@ export interface ProcessingContext {
   platform: string;
   url: string;
   startTime: number;
+  // Optional raw content for plain-text ingestion (non-URL submissions)
+  rawContent?: string;
+}
+
+function normalizeStats(
+  raw?: ExtractedContent["stats"] | null,
+  fallbacks?: Partial<Record<"views" | "likes" | "comments" | "shares" | "saves" | "plays", number>>
+): BaseAnalysisResult["metadata"]["stats"] | undefined {
+  const stats: BaseAnalysisResult["metadata"]["stats"] = {};
+  const source = raw || {};
+
+  const candidates = {
+    views: source.views ?? fallbacks?.views,
+    likes: source.likes ?? fallbacks?.likes,
+    comments: source.comments ?? fallbacks?.comments,
+    shares: source.shares ?? fallbacks?.shares,
+    saves: source.saves ?? fallbacks?.saves,
+    plays: source.plays ?? fallbacks?.plays,
+  };
+
+  (Object.keys(candidates) as Array<keyof typeof candidates>).forEach((key) => {
+    const value = candidates[key];
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+      stats[key] = value;
+    }
+  });
+
+  return Object.keys(stats).length > 0 ? stats : undefined;
 }
 
 /**
@@ -124,6 +191,13 @@ export abstract class BaseHandler {
         context
       );
 
+      // Step 3: Detect news/claims
+      const newsDetection = await this.measureOperation(
+        "news-detection",
+        () => this.detectNews(transcription, extractedData, context),
+        context
+      );
+
       // Step 3: Fact-check the content
       const factCheck = await this.measureOperation(
         "fact-checking",
@@ -138,21 +212,50 @@ export abstract class BaseHandler {
         context
       );
 
+      const metadata: BaseAnalysisResult["metadata"] = {
+        title: extractedData?.title || `${this.platform} Content`,
+        description: extractedData?.description || "",
+        creator: extractedData?.creator || "Unknown",
+        originalUrl: url,
+        platform: this.platform,
+        contentType: (extractedData as { type?: string })?.type,
+        thumbnailUrl:
+          typeof extractedData?.thumbnailUrl === "string"
+            ? (extractedData.thumbnailUrl as string)
+            : undefined,
+        hashtags: Array.isArray((extractedData as { hashtags?: unknown })?.hashtags)
+          ? ((extractedData as { hashtags?: string[] }).hashtags || []).map((tag) =>
+              tag.startsWith("#") ? tag.slice(1) : tag
+            )
+          : undefined,
+        creatorHandle:
+          (extractedData as { creatorHandle?: string })?.creatorHandle ||
+          (extractedData as { authorHandle?: string })?.authorHandle,
+        publishedAt:
+          typeof extractedData?.publishedAt === "string"
+            ? extractedData.publishedAt
+            : undefined,
+        durationSeconds:
+          typeof extractedData?.duration === "number"
+            ? extractedData.duration
+            : (extractedData as { durationSeconds?: number })?.durationSeconds,
+        stats: normalizeStats((extractedData as { stats?: ExtractedContent["stats"] })?.stats, {
+          views: extractedData?.viewCount,
+          likes: extractedData?.likeCount,
+          shares: extractedData?.shareCount,
+        }),
+      };
+
       const result: BaseAnalysisResult = {
         transcription: transcription || {
           text: "",
           segments: [],
           language: undefined,
         },
-        metadata: {
-          title: extractedData?.title || `${this.platform} Content`,
-          description: extractedData?.description || "",
-          creator: extractedData?.creator || "Unknown",
-          originalUrl: url,
-          platform: this.platform,
-        },
+        metadata,
+        newsDetection: newsDetection || null,
         factCheck,
-        requiresFactCheck: !!factCheck,
+        requiresFactCheck: (newsDetection?.needsFactCheck === true) && !factCheck,
         creatorCredibilityRating: credibilityRating,
       };
 
@@ -243,6 +346,12 @@ export abstract class BaseHandler {
     extractedData: ExtractedContent | null,
     context: ProcessingContext
   ): Promise<FactCheckResult | null>;
+
+  protected abstract detectNews(
+    transcription: TranscriptionResult | null,
+    extractedData: ExtractedContent | null,
+    context: ProcessingContext
+  ): Promise<NewsDetectionResult | null>;
 
   protected abstract calculateCredibility(
     factCheck: FactCheckResult | null,

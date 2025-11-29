@@ -5,9 +5,21 @@
 
 "use client";
 
+import { MouseEvent, type ReactNode } from "react";
+import { motion } from "framer-motion";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, User, ShieldCheck } from "lucide-react";
+import {
+  Eye,
+  Heart,
+  MessageSquare,
+  MoreHorizontal,
+  Repeat2,
+  Share2,
+  ShieldCheck,
+  User,
+} from "lucide-react";
 import Link from "next/link";
 import {
   Tooltip,
@@ -25,12 +37,25 @@ interface Analysis {
   metadata?: {
     creator?: string;
     title?: string;
+    description?: string;
+    platform?: string;
+    originalUrl?: string;
+    hashtags?: string[];
+    stats?: {
+      views?: number;
+      likes?: number;
+      comments?: number;
+      shares?: number;
+      saves?: number;
+      plays?: number;
+    };
   };
   transcription?: {
     text?: string;
   };
   factCheck?: {
     verdict?: string;
+    confidence?: number;
   };
   creatorCredibilityRating?: number;
 }
@@ -77,17 +102,57 @@ const CreatorCredibilityBadge = ({ rating }: CreatorCredibilityBadgeProps) => {
  */
 interface AnalysisActionsProps {
   analysisId: string;
+  onShare?: (event: MouseEvent<HTMLButtonElement>) => void;
 }
 
-const AnalysisActions = ({ analysisId }: AnalysisActionsProps) => (
-  <div className="flex justify-end items-center mt-4">
+const AnalysisActions = ({ analysisId, onShare }: AnalysisActionsProps) => (
+  <div className="flex flex-wrap justify-end items-center gap-2 mt-4">
     <Link href={`/news/${analysisId}`} passHref>
       <Button variant="outline" size="sm">
         View Details
       </Button>
     </Link>
+    {onShare && (
+      <Button variant="ghost" size="sm" className="gap-2" onClick={onShare}>
+        <Share2 className="h-4 w-4" />
+        Share
+      </Button>
+    )}
   </div>
 );
+
+const formatStatNumber = (value?: number) => {
+  if (!value || value <= 0) return null;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+  return value.toLocaleString();
+};
+
+const getStatsEntries = (analysis: Analysis) => {
+  const stats = analysis.metadata?.stats;
+  if (!stats) return [];
+  const config: Array<{ key: keyof typeof stats; label: string; icon: ReactNode }> = [
+    { key: "views", label: "Views", icon: <Eye className="h-3 w-3" /> },
+    { key: "likes", label: "Likes", icon: <Heart className="h-3 w-3" /> },
+    { key: "comments", label: "Comments", icon: <MessageSquare className="h-3 w-3" /> },
+    { key: "shares", label: "Shares", icon: <Repeat2 className="h-3 w-3" /> },
+  ];
+  return config
+    .map(({ key, label, icon }) => {
+      const formatted = formatStatNumber(stats[key]);
+      return formatted ? { label, value: formatted, icon } : null;
+    })
+    .filter((entry): entry is { label: string; value: string; icon: ReactNode } => !!entry);
+};
+
+const formatDomain = (url?: string | null) => {
+  if (!url) return "";
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url || "";
+  }
+};
 
 /**
  * Formats timestamp to readable date string
@@ -108,8 +173,39 @@ const formatDate = (timestamp: number): string => {
  * ```
  */
 export const AnalysisCard = ({ analysis, className }: AnalysisCardProps) => {
+  const statsEntries = getStatsEntries(analysis);
+
+  const handleShare = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const verdict = (() => {
+      const verdictText = analysis.factCheck?.verdict?.toLowerCase();
+      if (verdictText === "true") return "verified";
+      if (verdictText === "false") return "false";
+      return verdictText || "unverifiable";
+    })();
+    const confidence = analysis.factCheck?.confidence ?? 0;
+    const params = new URLSearchParams({
+      title: analysis.metadata?.title || "TinLens Analysis",
+      verdict,
+      confidence: String(Math.round(confidence)),
+      creator: analysis.metadata?.creator || "Unknown",
+      platform: analysis.metadata?.platform || "web",
+      domain: formatDomain(analysis.metadata?.originalUrl),
+    });
+    if (typeof window !== "undefined") {
+      window.open(`/api/share?${params.toString()}`, "_blank");
+    }
+  };
+
   return (
     <Link href={`/news/${analysis._id}`} className="block">
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        whileHover={{ scale: 1.005 }}
+      >
       <Card
         className={`rounded-none border-x-0 border-t-0 first:border-t hover:bg-muted/50 cursor-pointer ${className || ""}`}
       >
@@ -176,6 +272,28 @@ export const AnalysisCard = ({ analysis, className }: AnalysisCardProps) => {
                 </p>
               )}
 
+              {analysis.metadata?.hashtags && analysis.metadata.hashtags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {analysis.metadata.hashtags.slice(0, 4).map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      #{tag.replace(/^#/, "")}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {statsEntries.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                  {statsEntries.map((entry, index) => (
+                    <span key={`${entry.label}-${index}`} className="flex items-center gap-1 rounded-full border px-2 py-0.5">
+                      {entry.icon}
+                      <span className="font-semibold text-foreground">{entry.value}</span>
+                      <span>{entry.label}</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {/* Analysis Badges */}
               <div className="flex items-center gap-3 mt-2">
                 {analysis.factCheck?.verdict && (
@@ -193,11 +311,12 @@ export const AnalysisCard = ({ analysis, className }: AnalysisCardProps) => {
               </div>
 
               {/* Actions */}
-              <AnalysisActions analysisId={analysis._id} />
+              <AnalysisActions analysisId={analysis._id} onShare={handleShare} />
             </div>
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
     </Link>
   );
 };

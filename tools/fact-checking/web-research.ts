@@ -1,8 +1,11 @@
 import { tool, generateText } from "ai";
 import { z } from "zod";
 import { openai } from "@ai-sdk/openai";
+import { load } from "cheerio";
 import { evaluateDomainCredibility } from "./domain-credibility";
 import { analyzeVerificationStatus } from "./verification-analysis";
+import { scrapeWebContent } from "../helpers";
+import { isStrictRealMode } from "../../lib/config";
 
 /**
  * Represents a search result from the Exa Search API.
@@ -44,6 +47,104 @@ interface ExaContentResult {
   publishedDate?: string;
 }
 
+interface FallbackSearchResult {
+  title: string;
+  url: string;
+  snippet: string;
+}
+
+const FALLBACK_SEARCH_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+function resolveDuckDuckGoUrl(rawHref: string): string | null {
+  if (!rawHref) return null;
+
+  try {
+    if (rawHref.startsWith("/")) {
+      const parsed = new URL(`https://duckduckgo.com${rawHref}`);
+      const redirect = parsed.searchParams.get("uddg");
+      if (redirect) {
+        return decodeURIComponent(redirect);
+      }
+      return null;
+    }
+
+    if (rawHref.includes("duckduckgo.com")) {
+      const parsed = new URL(rawHref);
+      const redirect = parsed.searchParams.get("uddg");
+      if (redirect) {
+        return decodeURIComponent(redirect);
+      }
+    }
+
+    return rawHref.startsWith("http")
+      ? rawHref
+      : `https://${rawHref.replace(/^\/*/, "")}`;
+  } catch (error) {
+    console.warn("Failed to resolve DuckDuckGo URL:", rawHref, error);
+    return null;
+  }
+}
+
+async function performDuckDuckGoSearch(
+  query: string,
+  limit = 5
+): Promise<FallbackSearchResult[]> {
+  try {
+    const response = await fetch(
+      `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}&kl=us-en&ia=web`,
+      {
+        headers: {
+          "User-Agent": FALLBACK_SEARCH_USER_AGENT,
+          Accept: "text/html",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.warn(
+        `DuckDuckGo fallback search failed: ${response.status} ${response.statusText}`
+      );
+      return [];
+    }
+
+    const html = await response.text();
+    const $ = load(html);
+    const results: FallbackSearchResult[] = [];
+
+    $(".result").each((_, element) => {
+      if (results.length >= limit) {
+        return false;
+      }
+
+      const anchor = $(element).find("a.result__a");
+      const title = anchor.text().trim();
+      const rawHref = anchor.attr("href") || "";
+      const resolvedUrl = resolveDuckDuckGoUrl(rawHref);
+
+      if (!title || !resolvedUrl) {
+        return;
+      }
+
+      const snippet =
+        $(element).find(".result__snippet").text().trim() ||
+        $(element).find(".result__url__full").text().trim() ||
+        "";
+
+      results.push({
+        title,
+        url: resolvedUrl,
+        snippet,
+      });
+    });
+
+    return results;
+  } catch (error) {
+    console.warn("DuckDuckGo fallback search encountered an error:", error);
+    return [];
+  }
+}
+
 /**
  * Advanced web research and fact-checking tool using Exa API and OpenAI.
  *
@@ -83,17 +184,18 @@ export const researchAndFactCheck = tool({
   }),
   execute: async ({ transcription, title, context }) => {
     // Check if required API keys are available
-    if (!process.env.EXA_API_KEY) {
-      return {
-        success: false,
-        error: "Exa API key not configured",
-      };
-    }
-
     if (!process.env.OPENAI_API_KEY) {
       return {
         success: false,
         error: "OpenAI API key not configured",
+      };
+    }
+
+    // In strict mode, EXA API must be present; otherwise, do not fallback
+    if (isStrictRealMode && !process.env.EXA_API_KEY) {
+      return {
+        success: false,
+        error: "EXA_API_KEY is required in STRICT_REAL_MODE",
       };
     }
 
@@ -127,77 +229,6 @@ Return only the search query, nothing else.`;
         temperature: 0.3,
       });
 
-      /**
-       * STEP 2: URL Discovery via Exa Search
-       * Searches the web using the AI-generated query to find relevant URLs.
-       * This step focuses on finding sources rather than retrieving content.
-       */
-      const searchResponse = await fetch("https://api.exa.ai/search", {
-        method: "POST",
-        headers: {
-          "x-api-key": process.env.EXA_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: searchQuery,
-          numResults: 10,
-        }),
-      });
-
-      if (!searchResponse.ok) {
-        throw new Error(
-          `Exa Search API error: ${searchResponse.status} ${searchResponse.statusText}`
-        );
-      }
-
-      const searchData = await searchResponse.json();
-      const searchResults = searchData.results || [];
-
-      /**
-       * Extract and prioritize URLs for detailed content retrieval.
-       * Limits to top 5 results to balance comprehensive analysis with API costs.
-       */
-      const urlsToFetch = searchResults
-        .filter((result: ExaSearchResult) => result.url)
-        .slice(0, 5) // Limit to top 5 results for cost efficiency
-        .map((result: ExaSearchResult) => result.url);
-
-      /**
-       * STEP 3: Content Retrieval via Exa Get Contents
-       * Fetches full page content, summaries, and highlights for analysis.
-       * This provides the detailed information needed for fact-checking.
-       */
-      let contentResults: ExaContentResult[] = [];
-      if (urlsToFetch.length > 0) {
-        const contentsResponse = await fetch("https://api.exa.ai/contents", {
-          method: "POST",
-          headers: {
-            "x-api-key": process.env.EXA_API_KEY,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            urls: urlsToFetch,
-            text: true,
-            summary: true,
-            highlights: true,
-          }),
-        });
-
-        if (contentsResponse.ok) {
-          const contentsData = await contentsResponse.json();
-          contentResults = contentsData.results || [];
-        } else {
-          console.warn(
-            `Exa Contents API error: ${contentsResponse.status} ${contentsResponse.statusText}`
-          );
-        }
-      }
-
-      /**
-       * STEP 4: Source Processing and Content Aggregation
-       * Combines search metadata with full content, evaluates source credibility,
-       * and aggregates all information for AI analysis.
-       */
       const extractedSources: Array<{
         title: string;
         url: string;
@@ -208,64 +239,188 @@ Return only the search query, nothing else.`;
 
       let searchContent = "";
 
-      // Process search results with enhanced content from contents API
-      for (const result of searchResults) {
-        if (result.url) {
+      if (process.env.EXA_API_KEY) {
+        try {
+          /**
+           * STEP 2: URL Discovery via Exa Search (REST)
+           */
+          const searchResponse = await fetch("https://api.exa.ai/search", {
+            method: "POST",
+            headers: {
+              "x-api-key": process.env.EXA_API_KEY,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ query: searchQuery, numResults: 10 }),
+          });
+
+          if (!searchResponse.ok) {
+            throw new Error(
+              `Exa Search API error: ${searchResponse.status} ${searchResponse.statusText}`
+            );
+          }
+
+          const searchData = await searchResponse.json();
+          const searchResults = searchData.results || [];
+
+          /**
+           * STEP 3: Content Retrieval via Exa Contents (REST)
+           */
+          const urlsToFetch = searchResults
+            .filter((result: ExaSearchResult) => result.url)
+            .slice(0, 5)
+            .map((result: ExaSearchResult) => result.url);
+
+          let contentResults: ExaContentResult[] = [];
+          if (urlsToFetch.length > 0) {
+            const contentsResponse = await fetch("https://api.exa.ai/contents", {
+              method: "POST",
+              headers: {
+                "x-api-key": process.env.EXA_API_KEY,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                urls: urlsToFetch,
+                text: true,
+                summary: true,
+                highlights: true,
+              }),
+            });
+
+            if (contentsResponse.ok) {
+              const contentsData = await contentsResponse.json();
+              contentResults = contentsData.results || [];
+            } else {
+              console.warn(
+                `Exa Contents API error: ${contentsResponse.status} ${contentsResponse.statusText}`
+              );
+            }
+          }
+
+          /**
+           * STEP 4: Process sources & aggregate content
+           */
+          for (const result of searchResults) {
+            if (result.url) {
+              try {
+                const hostname = new URL(result.url).hostname;
+                const credibilityScore = await evaluateDomainCredibility(hostname);
+                const relevance = Math.min(credibilityScore / 10, result.score || 0.5);
+                const isHighlyCredible = credibilityScore >= 8;
+
+                extractedSources.push({
+                  title: result.title || `Source from ${hostname}`,
+                  url: result.url,
+                  source: hostname,
+                  relevance,
+                  description: isHighlyCredible
+                    ? "Credible news/fact-checking source"
+                    : "Web source from search results",
+                });
+
+                const contentResult = contentResults.find(
+                  (content: ExaContentResult) => content.url === result.url
+                );
+
+                searchContent += `\n\nSource: ${result.title || "Untitled"} (${hostname})`;
+                if (contentResult) {
+                  if (contentResult.text) {
+                    searchContent += `\nFull Content: ${contentResult.text.substring(0, 2000)}`;
+                  }
+                  if (contentResult.summary) {
+                    searchContent += `\nSummary: ${contentResult.summary}`;
+                  }
+                  if (contentResult.highlights && contentResult.highlights.length > 0) {
+                    searchContent += `\nHighlights: ${contentResult.highlights.join("; ")}`;
+                  }
+                  if (contentResult.publishedDate) {
+                    searchContent += `\nPublished: ${contentResult.publishedDate}`;
+                  }
+                } else {
+                  if (result.text) {
+                    searchContent += `\nContent: ${result.text.substring(0, 1000)}`;
+                  }
+                  if (result.summary) {
+                    searchContent += `\nSummary: ${result.summary}`;
+                  }
+                }
+              } catch (error) {
+                console.warn("Failed to process Exa result URL:", result.url, error);
+              }
+            }
+          }
+        } catch (exaError) {
+          if (isStrictRealMode) {
+            throw exaError instanceof Error ? exaError : new Error(String(exaError));
+          }
+          console.warn("Exa failed, falling back to DuckDuckGo", exaError);
+          const fallbackResults = await performDuckDuckGoSearch(searchQuery);
+          for (const result of fallbackResults) {
+            try {
+              const hostname = new URL(result.url).hostname;
+              const credibilityScore = await evaluateDomainCredibility(hostname);
+              const relevance = Math.max(0.2, Math.min(1, credibilityScore / 10));
+
+              extractedSources.push({
+                title: result.title,
+                url: result.url,
+                source: hostname,
+                relevance,
+                description: result.snippet || "Source discovered via DuckDuckGo fallback search",
+              });
+
+              searchContent += `\n\nSource: ${result.title} (${hostname})`;
+              if (result.snippet) {
+                searchContent += `\nSnippet: ${result.snippet}`;
+              }
+
+              const scraped = await scrapeWebContent(result.url);
+              if (scraped.success && scraped.data?.content) {
+                searchContent += `\nExtracted Content: ${scraped.data.content.substring(0, 1500)}`;
+              }
+            } catch (error) {
+              console.warn("Failed to process fallback search result:", result.url, error);
+            }
+          }
+        }
+      } else {
+        // If we are here, EXA_API_KEY is not set. In strict mode we already returned above.
+        /**
+         * Fallback Search Path
+         * Uses DuckDuckGo HTML endpoint when Exa API isn't available.
+         */
+        const fallbackResults = await performDuckDuckGoSearch(searchQuery);
+
+        for (const result of fallbackResults) {
           try {
             const hostname = new URL(result.url).hostname;
             const credibilityScore = await evaluateDomainCredibility(hostname);
-            const relevance = Math.min(
-              credibilityScore / 10,
-              result.score || 0.5
+            const relevance = Math.max(
+              0.2,
+              Math.min(1, credibilityScore / 10)
             );
-            const isHighlyCredible = credibilityScore >= 8;
 
             extractedSources.push({
-              title: result.title || `Source from ${hostname}`,
+              title: result.title,
               url: result.url,
               source: hostname,
-              relevance: relevance,
-              description: isHighlyCredible
-                ? "Credible news/fact-checking source"
-                : "Web source from search results",
+              relevance,
+              description:
+                result.snippet ||
+                "Source discovered via DuckDuckGo fallback search",
             });
 
-            // Find corresponding content from contents API
-            const contentResult = contentResults.find(
-              (content: ExaContentResult) => content.url === result.url
-            );
+            searchContent += `\n\nSource: ${result.title} (${hostname})`;
+            if (result.snippet) {
+              searchContent += `\nSnippet: ${result.snippet}`;
+            }
 
-            // Aggregate content for analysis with full content when available
-            searchContent += `\n\nSource: ${result.title || "Untitled"} (${hostname})`;
-
-            if (contentResult) {
-              if (contentResult.text) {
-                searchContent += `\nFull Content: ${contentResult.text.substring(0, 2000)}`;
-              }
-              if (contentResult.summary) {
-                searchContent += `\nSummary: ${contentResult.summary}`;
-              }
-              if (
-                contentResult.highlights &&
-                contentResult.highlights.length > 0
-              ) {
-                searchContent += `\nHighlights: ${contentResult.highlights.join("; ")}`;
-              }
-              if (contentResult.publishedDate) {
-                searchContent += `\nPublished: ${contentResult.publishedDate}`;
-              }
-            } else {
-              // Fallback to search result data if content retrieval failed
-              if (result.text) {
-                searchContent += `\nContent: ${result.text.substring(0, 1000)}`;
-              }
-              if (result.summary) {
-                searchContent += `\nSummary: ${result.summary}`;
-              }
+            const scraped = await scrapeWebContent(result.url);
+            if (scraped.success && scraped.data?.content) {
+              searchContent += `\nExtracted Content: ${scraped.data.content.substring(0, 1500)}`;
             }
           } catch (error) {
             console.warn(
-              "Failed to process Exa result URL:",
+              "Failed to process fallback search result:",
               result.url,
               error
             );

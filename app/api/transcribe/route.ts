@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 
+export const runtime = "nodejs";
+
 import {
   validateTranscribeRequest,
   detectPlatform,
@@ -14,8 +16,12 @@ import { checkOperationRateLimit } from "../../../lib/rate-limiter";
 import { InstagramHandler } from "./handlers/instagram-handler";
 import { YouTubeHandler } from "./handlers/youtube-handler";
 import { WebHandler } from "./handlers/web-handler";
+import { TwitterHandler } from "./handlers/twitter-handler";
+import { TikTokHandler } from "./handlers/tiktok-handler";
 import { ProcessingContext } from "./handlers/base-handler";
 import { api } from "@/convex/_generated/api";
+import { normalizeAnalysisResult } from "@/lib/analysis-normalizer";
+import { TextHandler } from "./handlers/text-handler";
 
 function createConvexClient(token: string) {
   const url = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -101,16 +107,36 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     });
 
-    // Step 2: Extract and sanitize the URL
-    const rawUrl =
+    // Step 2: Handle plain text ingestion or extract and sanitize the URL
+    const isTextOnly = !!validatedRequest.contentText && !(
       validatedRequest.webUrl ||
       validatedRequest.instagramUrl ||
       validatedRequest.youtubeUrl ||
-      validatedRequest.contentUrl!;
+      validatedRequest.twitterUrl ||
+      validatedRequest.tiktokUrl ||
+      validatedRequest.contentUrl
+    );
 
-    const sanitizedUrl = sanitizeUrl(rawUrl);
-    const platform = detectPlatform(sanitizedUrl);
-    validateUrl(sanitizedUrl, platform);
+    let sanitizedUrl = "";
+    let platform: ReturnType<typeof detectPlatform> | "text" = "web";
+
+    if (isTextOnly) {
+      // Synthetic URL for persistence and downstream typing
+      sanitizedUrl = "text:submission";
+      platform = "web";
+    } else {
+      const rawUrl =
+        validatedRequest.webUrl ||
+        validatedRequest.instagramUrl ||
+        validatedRequest.youtubeUrl ||
+        validatedRequest.twitterUrl ||
+        validatedRequest.tiktokUrl ||
+        validatedRequest.contentUrl!;
+
+      sanitizedUrl = sanitizeUrl(rawUrl);
+      platform = detectPlatform(sanitizedUrl);
+      validateUrl(sanitizedUrl, platform);
+    }
 
     logger.info("Platform detected and URL sanitized", {
       requestId,
@@ -161,33 +187,49 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const convexToken = await getToken({ template: "convex" });
-    if (!convexToken) {
-      throw ApiError.internalError(
-        new Error("Unable to obtain Convex auth token from Clerk.")
-      );
-    }
-
-    const convex = createConvexClient(convexToken);
-    const currentUser = await convex.query(api.users.getCurrentUser, {});
-
-    if (!currentUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: {
-            code: "USER_NOT_FOUND",
-            message: "We could not locate your TinLens account record.",
-          },
+    // Initialize Convex (optional) – continue without it if token missing
+    let convex: ConvexHttpClient | null = null;
+    let hasUnlimitedCredits = true;
+    let availableCredits = -1;
+    try {
+      const convexToken = await getToken({ template: "convex" });
+      if (convexToken) {
+        convex = createConvexClient(convexToken);
+        const currentUser = await convex.query(api.users.getCurrentUser, {});
+        if (currentUser) {
+          hasUnlimitedCredits =
+            currentUser.hasUnlimitedCredits || currentUser.credits === -1;
+          availableCredits = currentUser.credits ?? 0;
+        } else {
+          logger.warn("Convex user not found; proceeding without credit enforcement", {
+            requestId,
+            operation: "convex-user-lookup",
+            platform,
+          });
+        }
+      } else {
+        logger.warn("Missing Convex token from Clerk; proceeding without Convex", {
+          requestId,
+          operation: "convex-init",
+          platform,
+        });
+      }
+    } catch (convexInitError) {
+      logger.warn("Convex initialization failed; proceeding without Convex", {
+        requestId,
+        operation: "convex-init",
+        platform,
+        metadata: {
+          errorMessage:
+            convexInitError instanceof Error
+              ? convexInitError.message
+              : String(convexInitError),
         },
-        { status: 404 }
-      );
+      });
     }
 
-    const hasUnlimitedCredits =
-      currentUser.hasUnlimitedCredits || currentUser.credits === -1;
-    const availableCredits = currentUser.credits ?? 0;
-    if (!hasUnlimitedCredits && availableCredits < 1) {
+    // Enforce credits only when Convex is available and user data is loaded
+    if (convex && !hasUnlimitedCredits && availableCredits < 1) {
       return NextResponse.json(
         {
           success: false,
@@ -208,22 +250,33 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       platform,
       url: sanitizedUrl,
       startTime,
+      rawContent: isTextOnly ? validatedRequest.contentText : undefined,
     };
 
     // Step 5: Select appropriate handler based on platform
     let handler;
-    switch (platform) {
-      case "instagram":
-        handler = new InstagramHandler();
-        break;
-      case "youtube":
-        handler = new YouTubeHandler();
-        break;
-      case "web":
-        handler = new WebHandler();
-        break;
-      default:
-        throw ApiError.unsupportedPlatform(sanitizedUrl);
+    if (isTextOnly) {
+      handler = new TextHandler();
+    } else {
+      switch (platform) {
+        case "instagram":
+          handler = new InstagramHandler();
+          break;
+        case "youtube":
+          handler = new YouTubeHandler();
+          break;
+        case "twitter":
+          handler = new TwitterHandler();
+          break;
+        case "tiktok":
+          handler = new TikTokHandler();
+          break;
+        case "web":
+          handler = new WebHandler();
+          break;
+        default:
+          throw ApiError.unsupportedPlatform(sanitizedUrl);
+      }
     }
 
     logger.info("Handler selected, starting content processing", {
@@ -235,8 +288,94 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Step 6: Process the content using the selected handler
     const result = await handler.process(sanitizedUrl, context);
+    const enrichedResult = normalizeAnalysisResult(result);
 
-    if (!hasUnlimitedCredits) {
+    const convexMetadata = {
+      title: enrichedResult.metadata.title,
+      description: enrichedResult.metadata.description,
+      creator: enrichedResult.metadata.creator,
+      originalUrl: enrichedResult.metadata.originalUrl,
+      platform: enrichedResult.metadata.platform,
+      contentType: enrichedResult.metadata.contentType,
+    } as const;
+
+    const sanitizedConvexMetadata = Object.fromEntries(
+      Object.entries(convexMetadata).filter(([, value]) => value !== undefined && value !== null)
+    ) as typeof convexMetadata;
+
+    // Persist analysis so history/counts update even if client doesn't save
+    if (convex) {
+      try {
+        await convex.mutation(
+          api.tiktokAnalyses.saveTikTokAnalysisWithCredibility,
+          {
+            videoUrl: sanitizedUrl,
+            transcription: enrichedResult.transcription.text
+              ? {
+                  text: enrichedResult.transcription.text,
+                  language: enrichedResult.transcription.language,
+                }
+              : undefined,
+            metadata: sanitizedConvexMetadata,
+            newsDetection: enrichedResult.newsDetection ?? undefined,
+            factCheck: enrichedResult.factCheck
+              ? {
+                  verdict: enrichedResult.factCheck.verdict,
+                  confidence: enrichedResult.factCheck.confidence,
+                  explanation: enrichedResult.factCheck.explanation,
+                  content: enrichedResult.factCheck.content,
+                  isVerified: enrichedResult.factCheck.isVerified,
+                  sources: (enrichedResult.factCheck.sources || []).map(
+                    (source) => ({
+                      title: source.title,
+                      url: source.url,
+                      source: source.source,
+                      relevance: source.relevance,
+                    })
+                  ),
+                  error: enrichedResult.factCheck.error,
+                  totalClaims: enrichedResult.factCheck.totalClaims,
+                  checkedClaims: enrichedResult.factCheck.checkedClaims,
+                  results: enrichedResult.factCheck.results.map((item) => ({
+                    claim: item.claim,
+                    status: item.status,
+                    confidence: item.confidence,
+                    analysis: item.analysis,
+                    sources: (item.sources || []).map((source) => source.url),
+                    error: item.error,
+                  })),
+                  summary: enrichedResult.factCheck.summary,
+                }
+              : undefined,
+            requiresFactCheck: enrichedResult.requiresFactCheck,
+            creatorCredibilityRating:
+              typeof enrichedResult.creatorCredibilityRating === "number"
+                ? enrichedResult.creatorCredibilityRating
+                : undefined,
+          }
+        );
+      } catch (persistError) {
+        logger.warn("Failed to persist analysis to Convex", {
+          requestId,
+          operation: "persist-analysis",
+          platform,
+          metadata: {
+            errorMessage:
+              persistError instanceof Error
+                ? persistError.message
+                : String(persistError),
+          },
+        });
+      }
+    } else {
+      logger.warn("Skipping persistence: Convex unavailable", {
+        requestId,
+        operation: "persist-analysis",
+        platform,
+      });
+    }
+
+    if (convex && !hasUnlimitedCredits) {
       try {
         await convex.mutation(api.credits.deductCredits, { amount: 1 });
       } catch (creditError) {
@@ -260,16 +399,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       platform,
       duration,
       metadata: {
-        hasTranscription: !!result.transcription.text,
-        hasFactCheck: !!result.factCheck,
-        hasCredibilityRating: result.creatorCredibilityRating !== null,
-        factCheckVerdict: result.factCheck?.verdict,
-        credibilityRating: result.creatorCredibilityRating,
+        hasTranscription: !!enrichedResult.transcription.text,
+        hasFactCheck: !!enrichedResult.factCheck,
+        hasCredibilityRating:
+          enrichedResult.creatorCredibilityRating !== null &&
+          enrichedResult.creatorCredibilityRating !== undefined,
+        factCheckVerdict: enrichedResult.factCheck?.verdict,
+        credibilityRating: enrichedResult.creatorCredibilityRating,
       },
     });
 
     return NextResponse.json(
-      { success: true, data: result },
+      { success: true, data: enrichedResult },
       {
         status: 200,
         headers: {
@@ -339,7 +480,7 @@ export async function GET(): Promise<NextResponse> {
     service: "content-analysis-api",
     version: "1.0.0",
     timestamp: new Date().toISOString(),
-    supportedPlatforms: ["instagram", "youtube", "web"],
+    supportedPlatforms: ["instagram", "youtube", "twitter", "tiktok", "web"],
     features: [
       "video-transcription",
       "fact-checking",

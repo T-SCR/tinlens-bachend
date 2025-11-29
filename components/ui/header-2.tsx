@@ -5,8 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useConvexAuth } from 'convex/react';
 import { UserButton } from '@clerk/nextjs';
+import { usePathname } from 'next/navigation';
 
 import { Button, buttonVariants } from '@/components/ui/button';
+import { ShinyButton } from '@/components/ui/shiny-button';
 import { cn } from '@/lib/utils';
 import { MenuToggleIcon } from '@/components/ui/menu-toggle-icon';
 import { useScroll } from '@/components/ui/use-scroll';
@@ -19,8 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const publicLinks = [
-	{ label: 'Verify', href: '/verify' },
-	{ label: 'Trends', href: '/trends' },
+	{ label: 'Verify', href: '/#verify' },
 	{ label: 'How it Works', href: '/#how-it-works' },
 	{ label: 'Pricing', href: '/credits' },
 ];
@@ -28,7 +29,6 @@ const publicLinks = [
 const privateLinks = [
 	{ label: 'Dashboard', href: '/dashboard' },
 	{ label: 'Verify', href: '/verify' },
-	{ label: 'Trends', href: '/trends' },
 	{ label: 'Saved Analyses', href: '/analyses' },
 ];
 
@@ -44,6 +44,7 @@ export function Header() {
 	const [mounted, setMounted] = React.useState(false);
 	const { isAuthenticated } = useConvexAuth();
 	const primaryLinks = isAuthenticated ? privateLinks : publicLinks;
+	const pathname = usePathname();
 
 	React.useEffect(() => {
 		setMounted(true);
@@ -60,6 +61,10 @@ export function Header() {
 			document.body.style.overflow = '';
 		};
 	}, [open]);
+
+	if (pathname?.startsWith('/dashboard')) {
+		return null;
+	}
 
 	return (
 		<header
@@ -132,14 +137,9 @@ export function Header() {
 							afterSignOutUrl="/"
 						/>
 					) : (
-						<>
-							<Link href="/sign-in">
-								<Button variant="outline">Sign In</Button>
-							</Link>
-							<Link href="/sign-up">
-								<Button>Get Started</Button>
-							</Link>
-						</>
+						<Link href="/sign-up">
+							<ShinyButton className="px-6 py-3">Get Started</ShinyButton>
+						</Link>
 					)}
 				</div>
 
@@ -202,16 +202,9 @@ export function Header() {
 								<span className="text-sm font-medium">My Profile</span>
 							</div>
 						) : (
-							<>
-								<Link href="/sign-in" className="w-full">
-									<Button variant="outline" className="w-full">
-										Sign In
-									</Button>
-								</Link>
-								<Link href="/sign-up" className="w-full">
-									<Button className="w-full">Get Started</Button>
-								</Link>
-							</>
+							<Link href="/sign-up" className="w-full">
+								<ShinyButton className="w-full px-6 py-3">Get Started</ShinyButton>
+							</Link>
 						)}
 					</div>
 				</div>

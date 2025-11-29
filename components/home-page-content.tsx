@@ -5,8 +5,8 @@ import { FeatureShowcase } from "@/components/sections/feature-showcase"
 import { SecuritySection } from "@/components/sections/security-section"
 import { SocialProof } from "@/components/sections/social-proof"
 import { StatStrip } from "@/components/sections/stat-strip"
-import { TrendsAndTeams } from "@/components/sections/trends-teams"
 import { UseCasesSection } from "@/components/sections/use-cases"
+import { FactCheckerLogos } from "@/components/sections/fact-checker-logos"
 
 export function HomePageContent() {
   return (
@@ -15,8 +15,8 @@ export function HomePageContent() {
       <StatStrip />
       <FeatureShowcase />
       <HowItWorks />
+      <FactCheckerLogos />
       <UseCasesSection />
-      <TrendsAndTeams />
       <SocialProof />
       <SecuritySection />
       <CTASection />

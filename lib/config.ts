@@ -3,8 +3,9 @@ import { z } from "zod";
 // Environment configuration schema
 const configSchema = z.object({
   // API Keys
-  OPENAI_API_KEY: z.string().min(1, "OpenAI API key is required"),
-  FIRECRAWL_API_KEY: z.string().min(1, "Firecrawl API key is required"),
+  OPENAI_API_KEY: z.string().optional().default(""),
+  EXA_API_KEY: z.string().optional().default(""),
+  FIRECRAWL_API_KEY: z.string().optional().default(""),
 
   // Clerk Authentication
   CLERK_SECRET_KEY: z.string().min(1, "Clerk secret key is required"),
@@ -21,6 +22,7 @@ const configSchema = z.object({
     .enum(["development", "production", "test"])
     .default("development"),
   VERCEL_URL: z.string().optional(),
+  STRICT_REAL_MODE: z.coerce.boolean().default(false),
 
   // Rate Limiting
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000), // 15 minutes
@@ -61,3 +63,4 @@ export type Config = z.infer<typeof configSchema>;
 export const isDevelopment = config.NODE_ENV === "development";
 export const isProduction = config.NODE_ENV === "production";
 export const isTest = config.NODE_ENV === "test";
+export const isStrictRealMode = config.STRICT_REAL_MODE;

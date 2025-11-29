@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { LoaderIcon, Megaphone, ShieldCheck } from "lucide-react";
 import { useConvexAuth } from "convex/react";
 import { toast } from "sonner";
@@ -30,8 +29,8 @@ export function EnhancedHero() {
     }
 
     if (!isAuthenticated) {
-      toast.error("Please sign in to verify content");
-      router.push("/sign-in");
+      toast.error("Create an account to verify content");
+      router.push("/sign-up");
       return;
     }
 
@@ -40,7 +39,7 @@ export function EnhancedHero() {
   };
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden">
+    <section id="verify" className="relative min-h-screen w-full overflow-hidden">
       <Vortex
         backgroundColor="transparent"
         rangeY={800}
@@ -77,55 +76,55 @@ export function EnhancedHero() {
             score, tags, citations, and a myth-vs-fact card.
           </p>
 
-          <form onSubmit={handleAnalyze} className="mx-auto max-w-2xl space-y-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
-              <Input
-                placeholder={
-                  t.urlPlaceholder ||
-                  "Paste a URL or caption (Instagram Reels, YouTube, WhatsApp text…)"
-                }
-                className="h-12 flex-1 min-w-0 text-base"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                disabled={isLoading}
-              />
+          {isAuthenticated ? (
+            <form onSubmit={handleAnalyze} className="mx-auto max-w-2xl space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
+                <Input
+                  placeholder={
+                    t.urlPlaceholder ||
+                    "Paste a URL or caption (Instagram Reels, YouTube, WhatsApp text…)"
+                  }
+                  className="h-12 flex-1 min-w-0 text-base"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  disabled={isLoading}
+                />
+                <ShinyButton
+                  type="submit"
+                  disabled={isLoading}
+                  className="h-12 shrink-0 px-6 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <>
+                      <LoaderIcon className="mr-2 inline-block h-4 w-4 animate-spin" />
+                      {t.analyzing || "Analyzing"}
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="mr-2 inline-block h-4 w-4" />
+                      {t.analyzeButton || "Analyze content"}
+                    </>
+                  )}
+                </ShinyButton>
+              </div>
+              <p className="text-center text-sm text-muted-foreground">
+                TinLens ingests Instagram Reels, YouTube videos, and raw text. Safe Mode takes over automatically when confidence
+                drops below 50.
+              </p>
+            </form>
+          ) : (
+            <div className="mx-auto flex max-w-md flex-col items-center gap-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Create a TinLens account to run verifications inside your dashboard. The landing page stays public so you can explore first.
+              </p>
               <ShinyButton
-                type="submit"
-                disabled={isLoading}
-                className="h-12 shrink-0 px-6 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => router.push("/sign-up")}
+                className="px-8 py-6 text-base font-semibold"
               >
-                {isLoading ? (
-                  <>
-                    <LoaderIcon className="mr-2 inline-block h-4 w-4 animate-spin" />
-                    {t.analyzing || "Analyzing"}
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="mr-2 inline-block h-4 w-4" />
-                    {t.analyzeButton || "Verify a claim"}
-                  </>
-                )}
+                Get Started
               </ShinyButton>
             </div>
-
-            <p className="text-center text-sm text-muted-foreground">
-              TinLens ingests Instagram Reels, YouTube videos, and raw text. Safe Mode takes
-              over automatically when confidence drops below 50.
-            </p>
-
-            {!isAuthenticated && (
-              <p className="text-center text-sm">
-                <Link href="/sign-in" className="font-medium text-primary hover:underline">
-                  Sign in
-                </Link>
-                {" or "}
-                <Link href="/sign-up" className="font-medium text-primary hover:underline">
-                  create an account
-                </Link>{" "}
-                to open the dashboard
-              </p>
-            )}
-          </form>
+          )}
 
           <div className="mt-12 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
             <Badge variant="outline" className="bg-background/70">

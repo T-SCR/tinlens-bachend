@@ -4,9 +4,7 @@ import "./globals.css";
 
 import UserSync from "@/components/user-sync";
 import { Toaster } from "sonner";
-import { Header } from "@/components/ui/header-2";
 import Providers from "@/components/Providers";
-import { Footer } from "@/components/footer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -45,9 +43,9 @@ export default function RootLayout({
         <Providers>
           {/* User sync is used to sync the user to the database */}
           <UserSync />
-          <Header />
-          {children}
-          <Footer />
+          <div className="min-h-screen bg-background text-foreground">
+            {children}
+          </div>
           <Toaster richColors />
         </Providers>
       </body>

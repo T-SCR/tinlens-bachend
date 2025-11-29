@@ -7,9 +7,11 @@
 
 "use client";
 
+import type { ReactNode } from "react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Eye, Heart, MessageSquare, Repeat2 } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useLanguage } from "@/components/language-provider";
@@ -49,6 +51,32 @@ export const CreatorAnalyses = ({
     platform,
     limit,
   });
+
+  const formatStatNumber = (value?: number) => {
+    if (!value || value <= 0) return null;
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+    if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+    return value.toLocaleString();
+  };
+
+  const getStatsEntries = (
+    analysis: NonNullable<typeof analyses>[number]
+  ) => {
+    const stats = analysis.metadata?.stats;
+    if (!stats) return [];
+    const config: Array<{ key: keyof typeof stats; label: string; icon: ReactNode }> = [
+      { key: "views", label: "Views", icon: <Eye className="h-3 w-3" /> },
+      { key: "likes", label: "Likes", icon: <Heart className="h-3 w-3" /> },
+      { key: "comments", label: "Comments", icon: <MessageSquare className="h-3 w-3" /> },
+      { key: "shares", label: "Shares", icon: <Repeat2 className="h-3 w-3" /> },
+    ];
+    return config
+      .map(({ key, label, icon }) => {
+        const formatted = formatStatNumber(stats[key]);
+        return formatted ? { label, value: formatted, icon } : null;
+      })
+      .filter((entry): entry is { label: string; value: string; icon: ReactNode } => !!entry);
+  };
 
   /**
    * Gets the appropriate color class for fact-check verdicts
@@ -126,6 +154,31 @@ export const CreatorAnalyses = ({
                     <p className="text-sm text-muted-foreground line-clamp-3 break-words">
                       {analysis.factCheck.explanation}
                     </p>
+                  </div>
+                )}
+
+                {analysis.metadata?.hashtags && analysis.metadata.hashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {analysis.metadata.hashtags.slice(0, 4).map((tag) => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        #{tag.replace(/^#/, "")}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {getStatsEntries(analysis).length > 0 && (
+                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                    {getStatsEntries(analysis).map((entry, index) => (
+                      <span
+                        key={`${entry.label}-${index}`}
+                        className="flex items-center gap-1 rounded-full border px-2 py-0.5"
+                      >
+                        {entry.icon}
+                        <span className="font-semibold text-foreground">{entry.value}</span>
+                        <span>{entry.label}</span>
+                      </span>
+                    ))}
                   </div>
                 )}
 

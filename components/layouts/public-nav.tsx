@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ShinyButton } from "@/components/ui/shiny-button";
 import { useConvexAuth } from "convex/react";
 
 export function PublicNav() {
@@ -47,14 +48,9 @@ export function PublicNav() {
                 <Button>Go to Dashboard</Button>
               </Link>
             ) : (
-              <>
-                <Link href="/sign-in">
-                  <Button variant="ghost">Sign In</Button>
-                </Link>
-                <Link href="/sign-up">
-                  <Button>Get Started</Button>
-                </Link>
-              </>
+              <Link href="/sign-up">
+                <ShinyButton className="px-6 py-3">Get Started</ShinyButton>
+              </Link>
             )}
           </div>
         </div>
