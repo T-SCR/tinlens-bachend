@@ -428,7 +428,7 @@ interface AnalysisResult {
 **Processing Flow:**
 
 1. URL validation and platform detection
-2. Content extraction (TikTok API, Twitter Scraper, or Firecrawl)
+2. Content extraction (Twitter Scraper, or Firecrawl)
 3. Transcription (if video content exists)
 4. News content detection using AI
 5. Fact-checking pipeline execution
@@ -439,7 +439,6 @@ interface AnalysisResult {
 
 #### Custom Hooks (`lib/hooks/`)
 
-- **`use-tiktok-analysis.ts`**: Main analysis orchestration hook
 - **`use-saved-analyses.ts`**: Database interaction for saved analyses
 - **`use-credible-sources.ts`**: Credible source management
 - **`use-all-analyses.ts`**: Comprehensive analysis data fetching
@@ -510,7 +509,6 @@ components/
 - **News Organization API**: Integration capabilities for Indian newsrooms and fact-checkers
 - **Blockchain Verification**: Immutable fact-check records for transparency
 - **Community Moderator Tools**: Empower local community leaders to combat misinformation
-- **SMS Gateway**: Reach users without internet via USSD/SMS-based fact-checking
 
 ## 📄 License
 
