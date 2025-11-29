@@ -35,7 +35,7 @@ As digital citizens, we all play a role in upholding the truth. But the scale an
 | Name                                | Role                               | Contributions                                                                                    |
 | ----------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------ |
 | **Sharat Chandra Reddy Thimmareddy** | Team Leader / Full Stack Developer | Project architecture, AI integration, frontend development, API design, misinformation detection |
-| **Hrithvik Reddy Gajjala**          | Backend + AI Developer             | Backend services, AI model integration, fact-checking pipeline, API optimization, documentation  |
+| **Hrithvik Reddy Gajjala**          | Developer                          | Backend services, AI model integration, fact-checking pipeline, API optimization, documentation  |
 
 ## 🚀 Local Development Setup
 
